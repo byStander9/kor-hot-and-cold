@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  createShareText,
   getSeoulDateKey,
   getTemperature,
   isValidGuess,
@@ -54,5 +55,23 @@ describe("온도 구간", () => {
     expect(getTemperature(100).label).toBe("뜨거움");
     expect(getTemperature(1000).label).toBe("따뜻함");
     expect(getTemperature(1001).label).toBe("차가움");
+  });
+});
+
+describe("결과 공유", () => {
+  it("정답 단어 없이 게임 번호와 온도 흐름만 만든다", () => {
+    const text = createShareText({
+      gameNumber: 7,
+      solved: true,
+      attemptCount: 2,
+      results: [
+        { level: 1, isHint: false },
+        { level: 3, isHint: false },
+        { level: 2, isHint: true },
+      ],
+    });
+
+    expect(text).toBe("한국어 Hot & Cold #7\n2번 만에 정답!\n🟦🟧💡");
+    expect(text).not.toContain("가족");
   });
 });

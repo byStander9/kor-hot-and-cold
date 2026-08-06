@@ -28,7 +28,11 @@ export default function Home() {
         </p>
       </section>
 
-      <GameBoard wordCount={game.wordCount} />
+      <GameBoard
+        wordCount={game.wordCount}
+        gameDate={game.date}
+        gameNumber={game.gameNumber}
+      />
 
       <aside className={styles.guide} aria-labelledby="guide-title">
         <h2 id="guide-title">어떻게 가까움을 정하나요?</h2>

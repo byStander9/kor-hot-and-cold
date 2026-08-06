@@ -68,3 +68,27 @@ export function getTemperature(rank: number): Temperature {
   if (rank <= 1000) return { label: "따뜻함", level: 2 };
   return { label: "차가움", level: 1 };
 }
+
+export function createShareText(options: {
+  gameNumber: number;
+  solved: boolean;
+  attemptCount: number;
+  results: Array<{ level: number; isHint: boolean }>;
+}): string {
+  const outcome = options.solved
+    ? `${options.attemptCount}번 만에 정답!`
+    : "정답 확인 후 종료";
+  const blocks = options.results
+    .map((result) => {
+      if (result.isHint) return "💡";
+      if (result.level >= 4) return "🟥";
+      if (result.level === 3) return "🟧";
+      if (result.level === 2) return "🟨";
+      return "🟦";
+    })
+    .join("");
+
+  return [`한국어 Hot & Cold #${options.gameNumber}`, outcome, blocks].
+    filter(Boolean)
+    .join("\n");
+}

@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
+
+import { createShareText, getTemperature } from "@/lib/game";
 
 import styles from "./game-board.module.css";
 
@@ -18,15 +20,115 @@ type GuessResult = {
 
 type Props = {
   wordCount: number;
+  gameDate: string;
+  gameNumber: number;
 };
 
-export default function GameBoard({ wordCount }: Props) {
+type StoredGame = {
+  version: 1;
+  date: string;
+  guesses: Array<{
+    guess: string;
+    rank: number;
+    source: "guess" | "hint";
+  }>;
+  hintCount: number;
+  gaveUp: boolean;
+};
+
+const STORAGE_PREFIX = "kor-hot-and-cold:game:v1";
+
+function loadStoredGame(date: string, wordCount: number) {
+  try {
+    const raw = localStorage.getItem(`${STORAGE_PREFIX}:${date}`);
+    if (!raw) return null;
+
+    const stored = JSON.parse(raw) as Partial<StoredGame>;
+    if (
+      stored.version !== 1 ||
+      stored.date !== date ||
+      !Array.isArray(stored.guesses)
+    ) {
+      return null;
+    }
+
+    const guesses = stored.guesses.flatMap((guess) => {
+      if (
+        typeof guess?.guess !== "string" ||
+        !Number.isInteger(guess?.rank) ||
+        guess.rank < 1 ||
+        guess.rank > wordCount ||
+        (guess.source !== "guess" && guess.source !== "hint")
+      ) {
+        return [];
+      }
+
+      return [
+        {
+          ...guess,
+          total: wordCount,
+          temperature: getTemperature(guess.rank),
+          solved: guess.rank === 1,
+        },
+      ];
+    });
+
+    return {
+      guesses,
+      hintCount: Math.min(3, Math.max(0, Number(stored.hintCount) || 0)),
+      gaveUp: stored.gaveUp === true,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export default function GameBoard({ wordCount, gameDate, gameNumber }: Props) {
   const [input, setInput] = useState("");
   const [guesses, setGuesses] = useState<GuessResult[]>([]);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hintCount, setHintCount] = useState(0);
   const [revealedAnswer, setRevealedAnswer] = useState("");
+  const [gaveUp, setGaveUp] = useState(false);
+  const [storageReady, setStorageReady] = useState(false);
+  const [shareMessage, setShareMessage] = useState("");
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      const stored = loadStoredGame(gameDate, wordCount);
+      if (stored) {
+        setGuesses(stored.guesses);
+        setHintCount(stored.hintCount);
+        setGaveUp(stored.gaveUp);
+      }
+      setStorageReady(true);
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [gameDate, wordCount]);
+
+  useEffect(() => {
+    if (!storageReady) return;
+
+    const stored: StoredGame = {
+      version: 1,
+      date: gameDate,
+      guesses: guesses.map(({ guess, rank, source = "guess" }) => ({
+        guess,
+        rank,
+        source,
+      })),
+      hintCount,
+      gaveUp,
+    };
+
+    try {
+      localStorage.setItem(`${STORAGE_PREFIX}:${gameDate}`, JSON.stringify(stored));
+    } catch {
+      // 저장소가 차단된 환경에서도 현재 게임은 계속 진행한다.
+    }
+  }, [gameDate, gaveUp, guesses, hintCount, storageReady]);
 
   const attemptCount = guesses.filter((guess) => guess.source !== "hint").length;
   const bestRank = guesses.reduce(
@@ -34,7 +136,7 @@ export default function GameBoard({ wordCount }: Props) {
     wordCount,
   );
   const solved = guesses.some((guess) => guess.solved);
-  const finished = solved || Boolean(revealedAnswer);
+  const finished = solved || gaveUp;
 
   async function submitGuess(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -119,10 +221,36 @@ export default function GameBoard({ wordCount }: Props) {
       }
 
       setRevealedAnswer(data.answer);
+      setGaveUp(true);
     } catch {
       setError("정답을 불러오지 못했습니다. 잠시 뒤 다시 시도해 주세요.");
     } finally {
       setIsSubmitting(false);
+    }
+  }
+
+  async function shareResult() {
+    const text = createShareText({
+      gameNumber,
+      solved,
+      attemptCount,
+      results: [...guesses].reverse().map((guess) => ({
+        level: guess.temperature.level,
+        isHint: guess.source === "hint",
+      })),
+    });
+
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: "한국어 Hot and Cold", text });
+        setShareMessage("공유 메뉴를 열었습니다.");
+      } else {
+        await navigator.clipboard.writeText(text);
+        setShareMessage("결과를 클립보드에 복사했습니다.");
+      }
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      setShareMessage("공유하지 못했습니다. 다시 시도해 주세요.");
     }
   }
 
@@ -140,10 +268,10 @@ export default function GameBoard({ wordCount }: Props) {
           <strong>{guesses.find((guess) => guess.solved)?.guess}</strong>
           <p>{attemptCount}번 만에 오늘의 단어를 찾았습니다.</p>
         </div>
-      ) : revealedAnswer ? (
+      ) : gaveUp ? (
         <div className={styles.revealed} role="status">
           <span>오늘의 정답</span>
-          <strong>{revealedAnswer}</strong>
+          <strong>{revealedAnswer || "확인 완료"}</strong>
           <p>내일 새로운 단어로 다시 만나요.</p>
         </div>
       ) : (
@@ -187,6 +315,15 @@ export default function GameBoard({ wordCount }: Props) {
           <button type="button" onClick={giveUp} disabled={isSubmitting}>
             포기하고 정답 보기
           </button>
+        </div>
+      ) : null}
+
+      {finished ? (
+        <div className={styles.finishActions}>
+          <button type="button" onClick={shareResult}>
+            결과 공유하기
+          </button>
+          <p aria-live="polite">{shareMessage}</p>
         </div>
       ) : null}
 
