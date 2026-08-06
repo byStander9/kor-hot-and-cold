@@ -21,8 +21,11 @@ npm run dev
 ## 검사
 
 ```powershell
+npm test
 npm run lint
 npm run build
+npx playwright install chromium
+npm run test:e2e
 ```
 
 전체 프로젝트의 데이터 출처, 개발 과정, 라이선스는 저장소 루트의 한글 `README.md`에서 확인할 수 있습니다.

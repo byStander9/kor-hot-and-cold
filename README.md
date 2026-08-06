@@ -1,8 +1,10 @@
 # 한국어 Hot and Cold
 
+[![CI](https://github.com/byStander9/kor-hot-and-cold/actions/workflows/ci.yml/badge.svg)](https://github.com/byStander9/kor-hot-and-cold/actions/workflows/ci.yml)
+
 비밀 단어와 의미적으로 가까운 한국어 단어를 추측하며 정답을 찾아가는 일일 단어 게임입니다. 각 추측은 원시 유사도 대신 **전체 후보 어휘 중 의미 근접 순위**로 표시합니다.
 
-> 현재 상태: 데이터·모델 검증을 마치고 Next.js 웹 MVP를 구현하고 있습니다. 기능별 진행 과정과 검증 결과를 이 문서에 계속 기록합니다.
+> 현재 상태: 공개 데이터 기반 웹 MVP가 완성되었습니다. 4,851개 표제어, 59,315개 조사·활용형 별칭, 20개 데모 퍼즐을 제공하며 정식 문제 공개 전 사람 플레이 테스트가 남아 있습니다.
 
 ## 왜 만드는가
 
@@ -32,26 +34,23 @@ Reddit의 Hot and Cold를 플레이한 뒤 같은 탐색의 재미를 한국어�
 - 요청마다 유료 AI API를 호출하지 않고 순위를 미리 계산합니다.
 - 기능 하나가 검증될 때마다 독립된 커밋으로 공개합니다.
 
-## 예정 기술 구성
+## 기술 구성
 
 - 웹: Next.js, React, TypeScript
 - 데이터 파이프라인: Python
 - 공개 모델·데이터 탐색: Hugging Face Hub
-- 형태소 분석 후보: Kiwi/kiwipiepy
-- 유사도 기준 모델: fastText 한국어 벡터 및 공개 한국어 임베딩 모델 비교
-- 테스트: Vitest, Playwright, pytest
+- 형태소 처리: Kiwi/kiwipiepy 오프라인 별칭 생성
+- 유사도 모델: `intfloat/multilingual-e5-small`
+- 테스트: Vitest, Playwright, pytest, GitHub Actions
 
-## 데이터 전략
-
-초기에는 다음 공개 자료를 검토합니다.
+## 공개 데이터 활용
 
 | 자료 | 용도 | 저장소 포함 원칙 |
 |---|---|---|
-| 국립국어원 한국어기초사전 Open API | 일상 표제어, 품사, 뜻풀이 | 원문 재배포 대신 수집 스크립트와 출처 제공 |
-| 국립국어원 우리말샘 | 관련어와 어휘 확장 | 이용 조건을 확인한 필드만 가공 |
-| 국립국어원 모두의 말뭉치 | 빈도와 실제 문맥 | 승인·약관에 따라 로컬에서만 처리 |
-| Hugging Face 공개 모델·데이터셋 | 임베딩 모델과 공개 어휘 자료 비교 | 모델 카드와 데이터 카드의 라이선스 확인 |
-| fastText 한국어 벡터 | 빠른 단어 임베딩 기준선 | CC BY-SA 3.0 조건과 출처 표기 준수 |
+| Hugging Face NIKL 변환 사전 | 표제어·품사·뜻풀이·난이도 | 고정 커밋에서 파이프라인 실행, 원문은 Git에 미포함 |
+| Hugging Face multilingual-e5-small | 뜻풀이 기반 의미 벡터와 전체 순위 | MIT 모델을 고정 커밋으로 내려받아 오프라인 계산 |
+| Hugging Face multilingual MiniLM | 비교 기준 모델 | Apache-2.0 모델과 동일 어휘에서 상위 근접어 비교 |
+| Kiwi/kiwipiepy | 조사·불규칙 활용형 별칭 59,315개 | LGPL-3.0 공개 모델을 빌드 시에만 실행 |
 
 구체적인 출처와 고정 버전은 데이터 파이프라인과 함께 `data/sources/data_sources.yml`에 기록합니다.
 
@@ -68,7 +67,7 @@ Reddit의 Hot and Cold를 플레이한 뒤 같은 탐색의 재미를 한국어�
 - [x] 기본 게임 화면과 추측 목록
 - [x] 단계별 힌트와 정답 포기
 - [x] 날짜별 기록과 정답 비노출 공유
-- [ ] 모바일·접근성·회귀 테스트
+- [x] 모바일·접근성·회귀 테스트
 - [ ] 비공개 플레이 테스트와 정답 검수
 
 ## 개발 기록
@@ -136,9 +135,15 @@ Reddit의 Hot and Cold를 플레이한 뒤 같은 탐색의 재미를 한국어�
 - 여러 기본형과 충돌하거나 사전 표제어와 같은 별칭은 제외해 잘못된 자동 변환을 줄입니다.
 - 웹 서버는 미리 만든 별칭표만 읽으므로 요청마다 Python 분석기를 실행하지 않습니다.
 
+### 2026-08-06 — 자동 회귀 테스트와 공개 CI
+
+- Playwright가 데스크톱 Chrome과 Pixel 7 화면에서 추측, 별칭, 새로고침 복원을 검사합니다.
+- API 회귀 테스트로 게임 메타와 추측 응답에 정답·퍼즐 ID가 노출되지 않는지 확인합니다.
+- GitHub Actions가 Python 테스트와 Hugging Face 출처 검증, 웹 테스트·린트·빌드·E2E를 매 푸시마다 실행합니다.
+
 ## 로컬 실행
 
-데이터 파이프라인은 다음과 같이 실행합니다.
+### 1. 데이터 파이프라인
 
 ```powershell
 cd pipeline
@@ -149,6 +154,50 @@ uv run pytest
 ```
 
 첫 실행에서는 Hugging Face Hub에서 공개 사전과 모델을 내려받으므로 시간이 걸릴 수 있습니다.
+
+### 2. 웹앱
+
+데모 데이터가 저장소에 포함되어 있으므로 웹앱만 바로 실행할 수도 있습니다.
+
+```powershell
+cd apps/web
+npm install
+npm run dev
+```
+
+브라우저에서 `http://localhost:3000`을 엽니다.
+
+### 3. 전체 검사
+
+```powershell
+cd pipeline
+uv run pytest
+uv run verify-sources
+
+cd ../apps/web
+npm test
+npm run lint
+npm run build
+npx playwright install chromium
+npm run test:e2e
+```
+
+## 저장소 구조
+
+```text
+apps/web/       Next.js 화면, 서버 API, Vitest·Playwright 테스트
+pipeline/       Hugging Face 수집, 어휘 정제, Kiwi 별칭, 임베딩·순위 생성
+data/demo/      재현된 최소 어휘 메타데이터, 별칭, 20개 순위 파일
+data/sources/   외부 자료 URL, 고정 리비전, 라이선스, 재배포 판단
+docs/           전체 계획, 출처 정책, 모델 비교 결과
+```
+
+## 현재 한계
+
+- 20개 문제는 기술 데모이며 다수 한국어 화자의 블라인드 플레이 검수를 아직 거치지 않았습니다.
+- 뜻풀이 임베딩은 다의어의 여러 의미를 하나로 합치므로 일부 순위가 직관적이지 않을 수 있습니다.
+- 현재 어휘는 초급·중급 4,851개로 제한되어 전문어·신조어·고유명사는 대부분 인식하지 않습니다.
+- 연속 플레이 기록, 서버 분석, 신고 기능은 개인정보 수집을 피하기 위해 MVP에서 제외했습니다.
 
 ## 문서
 
