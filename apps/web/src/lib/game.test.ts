@@ -1,0 +1,58 @@
+import { describe, expect, it } from "vitest";
+
+import {
+  getSeoulDateKey,
+  getTemperature,
+  isValidGuess,
+  normalizeGuess,
+  selectScheduledPuzzle,
+  type Schedule,
+} from "./game";
+
+const schedule: Schedule = {
+  version: 1,
+  epoch: "2026-08-06",
+  timezone: "Asia/Seoul",
+  schedule: [
+    { day: 0, puzzleId: "demo-001" },
+    { day: 1, puzzleId: "demo-002" },
+  ],
+};
+
+describe("한국어 입력 정규화", () => {
+  it("앞뒤와 단어 사이 공백을 제거하고 한글을 NFC로 합친다", () => {
+    expect(normalizeGuess("  한 글 ")).toBe("한글");
+  });
+
+  it("완성형 한글만 허용한다", () => {
+    expect(isValidGuess("바다")).toBe(true);
+    expect(isValidGuess("sea")).toBe(false);
+    expect(isValidGuess("")).toBe(false);
+  });
+});
+
+describe("일일 퍼즐 선택", () => {
+  it("서울 날짜를 자정 경계에 맞춰 계산한다", () => {
+    expect(getSeoulDateKey(new Date("2026-08-05T15:00:00Z"))).toBe(
+      "2026-08-06",
+    );
+  });
+
+  it("일정을 끝까지 사용한 뒤 처음부터 순환한다", () => {
+    expect(selectScheduledPuzzle(schedule, "2026-08-08")).toEqual({
+      date: "2026-08-08",
+      gameNumber: 3,
+      puzzleId: "demo-001",
+    });
+  });
+});
+
+describe("온도 구간", () => {
+  it("순위 경계에서 알맞은 한글 상태를 반환한다", () => {
+    expect(getTemperature(1).label).toBe("정답");
+    expect(getTemperature(10).label).toBe("매우 뜨거움");
+    expect(getTemperature(100).label).toBe("뜨거움");
+    expect(getTemperature(1000).label).toBe("따뜻함");
+    expect(getTemperature(1001).label).toBe("차가움");
+  });
+});
