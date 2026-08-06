@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "한국어 Hot and Cold",
-  description: "의미적으로 가까운 한국어 단어를 따라 오늘의 정답을 찾는 게임",
+  description: "공유 가능한 시드의 비밀 단어를 의미 순위로 찾아가는 한국어 게임",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

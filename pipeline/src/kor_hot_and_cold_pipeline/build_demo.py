@@ -14,7 +14,14 @@ from .lexicon import (
     download_dictionary,
     download_standard_dictionary,
 )
-from .ranking import MODEL_REPO_ID, MODEL_REVISION, create_ranking, encode_entries, load_encoder
+from .ranking import (
+    MODEL_REPO_ID,
+    MODEL_REVISION,
+    create_ranking,
+    encode_entries,
+    load_encoder,
+    write_embedding_shards,
+)
 
 
 TARGETS = [
@@ -68,13 +75,28 @@ def write_json(path: Path, value: object) -> None:
     )
 
 
+def remove_legacy_puzzles(output: Path) -> None:
+    (output / "schedule.json").unlink(missing_ok=True)
+    puzzle_directory = output / "puzzles"
+    if not puzzle_directory.exists():
+        return
+    for puzzle_path in puzzle_directory.glob("demo-*.json"):
+        puzzle_path.unlink()
+    try:
+        puzzle_directory.rmdir()
+    except OSError:
+        pass
+
+
 def main() -> int:
     args = parse_args()
+    remove_legacy_puzzles(args.output)
     source_path = args.source or download_dictionary()
     standard_source_path = args.standard_source or download_standard_dictionary()
     entries = build_lexicon(source_path, standard_source_path)
     encoder = load_encoder()
     vectors = encode_entries(entries, encoder)
+    write_embedding_shards(args.output, vectors)
 
     write_json(
         args.output / "dictionary.json",
@@ -113,42 +135,23 @@ def main() -> int:
         },
     )
 
-    schedule: list[dict[str, object]] = []
     evaluation: dict[str, object] = {
         "model": {"repo_id": MODEL_REPO_ID, "revision": MODEL_REVISION},
         "lexicon_size": len(entries),
         "targets": {},
     }
 
-    for index, answer in enumerate(TARGETS, start=1):
+    for answer in TARGETS:
         ranking = create_ranking(entries, vectors, answer)
-        puzzle_id = f"demo-{index:03d}"
-        write_json(
-            args.output / "puzzles" / f"{puzzle_id}.json",
-            {
-                "version": 1,
-                "id": puzzle_id,
-                "answerWordId": ranking.answer_word_id,
-                "ranks": ranking.ranks,
-                "hintWordIds": ranking.hints,
-                "model": {"repoId": MODEL_REPO_ID, "revision": MODEL_REVISION},
-            },
-        )
-        schedule.append({"day": index - 1, "puzzleId": puzzle_id})
         evaluation["targets"][answer] = {
-            "puzzle_id": puzzle_id,
             "neighbors": ranking.neighbors,
         }
 
-    write_json(
-        args.output / "schedule.json",
-        {"version": 1, "epoch": "2026-08-06", "timezone": "Asia/Seoul", "schedule": schedule},
-    )
     write_json(args.output / "evaluation.json", evaluation)
 
     print(
         f"어휘 {len(entries):,}개, 별칭 {len(aliases):,}개, "
-        f"문제 {len(TARGETS)}개를 {args.output}에 생성했습니다."
+        f"전체 어휘 임베딩을 {args.output}에 생성했습니다."
     )
     return 0
 

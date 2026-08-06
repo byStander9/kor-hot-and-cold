@@ -24,6 +24,24 @@
   background: linear-gradient(90deg, var(--cold), #cfd3d5 48%, var(--warm) 72%, var(--hot));
 }
 
+.seedControls {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 12px;
+  padding: 18px 32px;
+  border-bottom: 1px solid var(--line);
+  background: #faf9f5;
+}
+
+.seedControls form { display: grid; grid-template-columns: auto minmax(120px, 1fr) auto; align-items: center; gap: 8px; }
+.seedControls label { color: var(--muted); font-size: 0.72rem; font-weight: 750; }
+.seedControls input { min-width: 0; height: 38px; padding: 0 10px; border: 1px solid var(--line); border-radius: 9px; background: white; font-variant-numeric: tabular-nums; }
+.seedControls button { height: 38px; padding: 0 11px; color: var(--ink); border: 1px solid var(--line); border-radius: 9px; background: white; font-size: 0.72rem; font-weight: 750; cursor: pointer; }
+.seedControls button:hover { color: var(--cold-dark); border-color: var(--cold); }
+.seedControls > button { color: white; border-color: var(--ink); background: var(--ink); }
+.seedControls > button:hover { color: white; border-color: var(--cold-dark); background: var(--cold-dark); }
+.seedControls p { grid-column: 1 / -1; margin: 0; color: var(--muted); font-size: 0.7rem; }
+
 .form { padding: 30px 32px 18px; }
 
 .form label {
@@ -219,6 +237,10 @@
 @media (max-width: 560px) {
   .board { border-radius: 22px; }
   .form { padding: 24px 18px 14px; }
+  .seedControls { grid-template-columns: 1fr; padding-right: 18px; padding-left: 18px; }
+  .seedControls form { grid-template-columns: 1fr auto; }
+  .seedControls label { grid-column: 1 / -1; }
+  .seedControls > button { width: 100%; }
   .inputRow { grid-template-columns: 1fr; }
   .inputRow button { width: 100%; }
   .summary { margin: 0 18px 18px; }

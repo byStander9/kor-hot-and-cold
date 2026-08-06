@@ -1,8 +1,15 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 
-import { createShareText, getTemperature, sortByRank } from "@/lib/game";
+import {
+  createShareText,
+  GAME_DATA_VERSION,
+  getTemperature,
+  parseSeed,
+  sortByRank,
+} from "@/lib/game";
 
 import styles from "./game-board.module.css";
 
@@ -29,13 +36,14 @@ type GuessResponse = GuessResult & {
 
 type Props = {
   wordCount: number;
-  gameDate: string;
-  gameNumber: number;
+  seed: number;
+  gameVersion: number;
 };
 
 type StoredGame = {
-  version: 1;
-  date: string;
+  version: 2;
+  seed: number;
+  gameVersion: number;
   guesses: Array<{
     guess: string;
     rank: number;
@@ -43,20 +51,22 @@ type StoredGame = {
   }>;
   hintCount: number;
   gaveUp: boolean;
+  revealedAnswer: string;
 };
 
-const STORAGE_PREFIX = "kor-hot-and-cold:game:v1";
+const STORAGE_PREFIX = "kor-hot-and-cold:game:v2";
 const RANKING_PAGE_SIZE = 500;
 
-function loadStoredGame(date: string, wordCount: number) {
+function loadStoredGame(seed: number, gameVersion: number, wordCount: number) {
   try {
-    const raw = localStorage.getItem(`${STORAGE_PREFIX}:${date}`);
+    const raw = localStorage.getItem(`${STORAGE_PREFIX}:${gameVersion}:${seed}`);
     if (!raw) return null;
 
     const stored = JSON.parse(raw) as Partial<StoredGame>;
     if (
-      stored.version !== 1 ||
-      stored.date !== date ||
+      stored.version !== 2 ||
+      stored.seed !== seed ||
+      stored.gameVersion !== gameVersion ||
       !Array.isArray(stored.guesses)
     ) {
       return null;
@@ -87,14 +97,18 @@ function loadStoredGame(date: string, wordCount: number) {
       guesses,
       hintCount: Math.min(3, Math.max(0, Number(stored.hintCount) || 0)),
       gaveUp: stored.gaveUp === true,
+      revealedAnswer:
+        typeof stored.revealedAnswer === "string" ? stored.revealedAnswer : "",
     };
   } catch {
     return null;
   }
 }
 
-export default function GameBoard({ wordCount, gameDate, gameNumber }: Props) {
+export default function GameBoard({ wordCount, seed, gameVersion }: Props) {
+  const router = useRouter();
   const [input, setInput] = useState("");
+  const [seedInput, setSeedInput] = useState(String(seed));
   const [guesses, setGuesses] = useState<GuessResult[]>([]);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -109,24 +123,26 @@ export default function GameBoard({ wordCount, gameDate, gameNumber }: Props) {
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
-      const stored = loadStoredGame(gameDate, wordCount);
+      const stored = loadStoredGame(seed, gameVersion, wordCount);
       if (stored) {
         setGuesses(stored.guesses);
         setHintCount(stored.hintCount);
         setGaveUp(stored.gaveUp);
+        setRevealedAnswer(stored.revealedAnswer);
       }
       setStorageReady(true);
     });
 
     return () => window.cancelAnimationFrame(frame);
-  }, [gameDate, wordCount]);
+  }, [gameVersion, seed, wordCount]);
 
   useEffect(() => {
     if (!storageReady) return;
 
     const stored: StoredGame = {
-      version: 1,
-      date: gameDate,
+      version: 2,
+      seed,
+      gameVersion,
       guesses: guesses.map(({ guess, rank, source = "guess" }) => ({
         guess,
         rank,
@@ -134,14 +150,18 @@ export default function GameBoard({ wordCount, gameDate, gameNumber }: Props) {
       })),
       hintCount,
       gaveUp,
+      revealedAnswer,
     };
 
     try {
-      localStorage.setItem(`${STORAGE_PREFIX}:${gameDate}`, JSON.stringify(stored));
+      localStorage.setItem(
+        `${STORAGE_PREFIX}:${gameVersion}:${seed}`,
+        JSON.stringify(stored),
+      );
     } catch {
       // 저장소가 차단된 환경에서도 현재 게임은 계속 진행한다.
     }
-  }, [gameDate, gaveUp, guesses, hintCount, storageReady]);
+  }, [gameVersion, gaveUp, guesses, hintCount, revealedAnswer, seed, storageReady]);
 
   const attemptCount = guesses.filter((guess) => guess.source !== "hint").length;
   const bestRank = guesses.reduce(
@@ -175,7 +195,7 @@ export default function GameBoard({ wordCount, gameDate, gameNumber }: Props) {
       const response = await fetch("/api/guess", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ guess: candidate }),
+        body: JSON.stringify({ guess: candidate, seed, version: gameVersion }),
       });
       const data = (await response.json()) as GuessResponse | { error: string };
 
@@ -209,7 +229,7 @@ export default function GameBoard({ wordCount, gameDate, gameNumber }: Props) {
       const response = await fetch("/api/hint", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bestRank }),
+        body: JSON.stringify({ bestRank, seed, version: gameVersion }),
       });
       const data = (await response.json()) as GuessResult | { error: string };
 
@@ -233,13 +253,17 @@ export default function GameBoard({ wordCount, gameDate, gameNumber }: Props) {
 
   async function giveUp() {
     if (isSubmitting || finished) return;
-    if (!window.confirm("오늘의 정답을 확인하고 게임을 끝낼까요?")) return;
+    if (!window.confirm("이 시드의 정답을 확인하고 게임을 끝낼까요?")) return;
 
     setIsSubmitting(true);
     setError("");
 
     try {
-      const response = await fetch("/api/reveal", { method: "POST" });
+      const response = await fetch("/api/reveal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ seed, version: gameVersion }),
+      });
       const data = (await response.json()) as {
         answer?: string;
         rankings?: RankingEntry[];
@@ -277,7 +301,11 @@ export default function GameBoard({ wordCount, gameDate, gameNumber }: Props) {
     setShareMessage("");
 
     try {
-      const response = await fetch("/api/reveal", { method: "POST" });
+      const response = await fetch("/api/reveal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ seed, version: gameVersion }),
+      });
       const data = (await response.json()) as {
         answer?: string;
         rankings?: RankingEntry[];
@@ -304,13 +332,14 @@ export default function GameBoard({ wordCount, gameDate, gameNumber }: Props) {
 
   async function shareResult() {
     const text = createShareText({
-      gameNumber,
+      seed,
       solved,
       attemptCount,
       results: [...guesses].reverse().map((guess) => ({
         level: guess.temperature.level,
         isHint: guess.source === "hint",
       })),
+      url: window.location.href,
     });
 
     try {
@@ -327,6 +356,26 @@ export default function GameBoard({ wordCount, gameDate, gameNumber }: Props) {
     }
   }
 
+  function navigateToSeed(nextSeed: number) {
+    router.push(`/?seed=${nextSeed}&v=${GAME_DATA_VERSION}`);
+  }
+
+  function startRandomGame() {
+    const values = new Uint32Array(1);
+    window.crypto.getRandomValues(values);
+    navigateToSeed(values[0]);
+  }
+
+  function openSeed(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const requestedSeed = parseSeed(seedInput);
+    if (requestedSeed === null) {
+      setError("시드는 0부터 4294967295 사이의 정수로 입력해 주세요.");
+      return;
+    }
+    navigateToSeed(requestedSeed);
+  }
+
   return (
     <section id="game" className={styles.board} aria-label="단어 추측 게임">
       <div className={styles.thermometer} aria-hidden="true">
@@ -335,17 +384,36 @@ export default function GameBoard({ wordCount, gameDate, gameNumber }: Props) {
         <span>뜨거움</span>
       </div>
 
+      <div className={styles.seedControls}>
+        <form onSubmit={openSeed}>
+          <label htmlFor="seed">게임 시드</label>
+          <input
+            id="seed"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            value={seedInput}
+            onChange={(event) => setSeedInput(event.target.value)}
+            aria-describedby="seed-help"
+          />
+          <button type="submit">시드 열기</button>
+        </form>
+        <button type="button" onClick={startRandomGame}>
+          랜덤 새 게임
+        </button>
+        <p id="seed-help">같은 시드를 공유하면 모두 같은 문제로 경쟁할 수 있어요.</p>
+      </div>
+
       {solved ? (
         <div className={styles.solved} role="status">
           <span className={styles.solvedMark}>정답!</span>
           <strong>{guesses.find((guess) => guess.solved)?.guess}</strong>
-          <p>{attemptCount}번 만에 오늘의 단어를 찾았습니다.</p>
+          <p>{attemptCount}번 만에 이 시드의 단어를 찾았습니다.</p>
         </div>
       ) : gaveUp ? (
         <div className={styles.revealed} role="status">
-          <span>오늘의 정답</span>
+          <span>이 시드의 정답</span>
           <strong>{revealedAnswer || "확인 완료"}</strong>
-          <p>내일 새로운 단어로 다시 만나요.</p>
+          <p>랜덤 새 게임을 눌러 바로 다음 문제를 시작할 수 있어요.</p>
         </div>
       ) : (
         <form className={styles.form} onSubmit={submitGuess}>
@@ -486,7 +554,7 @@ export default function GameBoard({ wordCount, gameDate, gameNumber }: Props) {
           <div className={styles.fullRankingTable}>
             <table>
               <caption className={styles.srOnly}>
-                오늘의 모든 단어 의미 근접 순위
+                이 시드의 모든 단어 의미 근접 순위
               </caption>
               <thead>
                 <tr>

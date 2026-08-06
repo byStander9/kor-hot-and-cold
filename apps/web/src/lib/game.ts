@@ -1,15 +1,10 @@
 export const MAX_GUESS_LENGTH = 20;
+export const MAX_SEED = 0xffffffff;
+export const GAME_DATA_VERSION = 1;
 
 export type Temperature = {
   label: "정답" | "매우 뜨거움" | "뜨거움" | "따뜻함" | "차가움";
   level: 0 | 1 | 2 | 3 | 4;
-};
-
-export type Schedule = {
-  version: number;
-  epoch: string;
-  timezone: "Asia/Seoul";
-  schedule: Array<{ day: number; puzzleId: string }>;
 };
 
 export function normalizeGuess(input: string): string {
@@ -24,41 +19,40 @@ export function isValidGuess(input: string): boolean {
   );
 }
 
-export function getSeoulDateKey(now = new Date()): string {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: "Asia/Seoul",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(now);
-
-  const value = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-  return `${value.year}-${value.month}-${value.day}`;
-}
-
-export function daysBetweenDateKeys(epoch: string, date: string): number {
-  const millisecondsPerDay = 24 * 60 * 60 * 1000;
-  return Math.floor(
-    (Date.parse(`${date}T00:00:00Z`) - Date.parse(`${epoch}T00:00:00Z`)) /
-      millisecondsPerDay,
-  );
-}
-
-export function selectScheduledPuzzle(schedule: Schedule, date: string) {
-  if (schedule.schedule.length === 0) {
-    throw new Error("퍼즐 일정이 비어 있습니다.");
+export function parseSeed(value: unknown): number | null {
+  const candidate = Array.isArray(value) ? value[0] : value;
+  if (typeof candidate === "number") {
+    return Number.isInteger(candidate) && candidate >= 0 && candidate <= MAX_SEED
+      ? candidate
+      : null;
+  }
+  if (typeof candidate !== "string" || !/^\d{1,10}$/.test(candidate)) {
+    return null;
   }
 
-  const elapsedDays = daysBetweenDateKeys(schedule.epoch, date);
-  const index =
-    ((elapsedDays % schedule.schedule.length) + schedule.schedule.length) %
-    schedule.schedule.length;
+  const seed = Number(candidate);
+  return Number.isSafeInteger(seed) && seed >= 0 && seed <= MAX_SEED
+    ? seed
+    : null;
+}
 
-  return {
-    date,
-    gameNumber: elapsedDays + 1,
-    puzzleId: schedule.schedule[index].puzzleId,
-  };
+export function isSupportedGameVersion(value: unknown): boolean {
+  return value === GAME_DATA_VERSION || value === String(GAME_DATA_VERSION);
+}
+
+export function selectAnswerWordId(seed: number, wordCount: number): number {
+  if (!Number.isInteger(seed) || seed < 0 || seed > MAX_SEED) {
+    throw new RangeError("시드는 0부터 4294967295 사이의 정수여야 합니다.");
+  }
+  if (!Number.isInteger(wordCount) || wordCount < 1) {
+    throw new RangeError("어휘 수는 1 이상의 정수여야 합니다.");
+  }
+
+  let mixed = seed >>> 0;
+  mixed = Math.imul(mixed ^ (mixed >>> 16), 0x21f0aaad);
+  mixed = Math.imul(mixed ^ (mixed >>> 15), 0x735a2d97);
+  mixed = (mixed ^ (mixed >>> 15)) >>> 0;
+  return mixed % wordCount;
 }
 
 export function getTemperature(rank: number): Temperature {
@@ -78,10 +72,11 @@ export function getHintTargetRank(bestRank: number): number {
 }
 
 export function createShareText(options: {
-  gameNumber: number;
+  seed: number;
   solved: boolean;
   attemptCount: number;
   results: Array<{ level: number; isHint: boolean }>;
+  url?: string;
 }): string {
   const outcome = options.solved
     ? `${options.attemptCount}번 만에 정답!`
@@ -96,7 +91,12 @@ export function createShareText(options: {
     })
     .join("");
 
-  return [`한국어 Hot & Cold #${options.gameNumber}`, outcome, blocks].
-    filter(Boolean)
+  return [
+    `한국어 Hot & Cold · 시드 #${options.seed}`,
+    outcome,
+    blocks,
+    options.url,
+  ]
+    .filter(Boolean)
     .join("\n");
 }

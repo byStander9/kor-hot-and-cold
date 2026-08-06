@@ -1,12 +1,16 @@
 import {
   isValidGuess,
+  isSupportedGameVersion,
   MAX_GUESS_LENGTH,
   normalizeGuess,
+  parseSeed,
 } from "@/lib/game";
 import { getFullRanking, judgeGuess } from "@/lib/game-data";
 
 type GuessRequest = {
   guess?: unknown;
+  seed?: unknown;
+  version?: unknown;
 };
 
 export async function POST(request: Request) {
@@ -38,7 +42,15 @@ export async function POST(request: Request) {
     );
   }
 
-  const result = judgeGuess(guess);
+  const seed = parseSeed(body.seed);
+  if (seed === null || !isSupportedGameVersion(body.version)) {
+    return Response.json(
+      { error: "시드 또는 게임 버전이 올바르지 않습니다." },
+      { status: 422 },
+    );
+  }
+
+  const result = judgeGuess(guess, seed);
   if (!result) {
     return Response.json(
       { error: "현재 게임 사전에 없거나 아직 지원하지 않는 활용형입니다." },
@@ -47,6 +59,6 @@ export async function POST(request: Request) {
   }
 
   return Response.json(
-    result.solved ? { ...result, rankings: getFullRanking() } : result,
+    result.solved ? { ...result, rankings: getFullRanking(seed) } : result,
   );
 }

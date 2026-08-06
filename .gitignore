@@ -27,10 +27,11 @@ artifacts/
 coverage/
 playwright-report/
 test-results/
+pipeline/build-seeded-data*.log
+apps/web/seeded-server*.log
 
 # 편집기와 운영체제
 .DS_Store
 Thumbs.db
 .idea/
 .vscode/
-

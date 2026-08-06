@@ -3,24 +3,15 @@ import { describe, expect, it } from "vitest";
 import {
   createShareText,
   getHintTargetRank,
-  getSeoulDateKey,
   getTemperature,
+  isSupportedGameVersion,
   isValidGuess,
+  MAX_SEED,
   normalizeGuess,
-  selectScheduledPuzzle,
+  parseSeed,
+  selectAnswerWordId,
   sortByRank,
-  type Schedule,
 } from "./game";
-
-const schedule: Schedule = {
-  version: 1,
-  epoch: "2026-08-06",
-  timezone: "Asia/Seoul",
-  schedule: [
-    { day: 0, puzzleId: "demo-001" },
-    { day: 1, puzzleId: "demo-002" },
-  ],
-};
 
 describe("한국어 입력 정규화", () => {
   it("앞뒤와 단어 사이 공백을 제거하고 한글을 NFC로 합친다", () => {
@@ -34,19 +25,29 @@ describe("한국어 입력 정규화", () => {
   });
 });
 
-describe("일일 퍼즐 선택", () => {
-  it("서울 날짜를 자정 경계에 맞춰 계산한다", () => {
-    expect(getSeoulDateKey(new Date("2026-08-05T15:00:00Z"))).toBe(
-      "2026-08-06",
-    );
+describe("시드 퍼즐 선택", () => {
+  it("32비트 범위의 숫자 문자열만 시드로 받는다", () => {
+    expect(parseSeed("0")).toBe(0);
+    expect(parseSeed(17)).toBe(17);
+    expect(parseSeed(String(MAX_SEED))).toBe(MAX_SEED);
+    expect(parseSeed(["17", "18"])).toBe(17);
+    expect(parseSeed("4294967296")).toBeNull();
+    expect(parseSeed("1.5")).toBeNull();
+    expect(parseSeed(undefined)).toBeNull();
+    expect(isSupportedGameVersion(1)).toBe(true);
+    expect(isSupportedGameVersion("1")).toBe(true);
+    expect(isSupportedGameVersion("2")).toBe(false);
   });
 
-  it("일정을 끝까지 사용한 뒤 처음부터 순환한다", () => {
-    expect(selectScheduledPuzzle(schedule, "2026-08-08")).toEqual({
-      date: "2026-08-08",
-      gameNumber: 3,
-      puzzleId: "demo-001",
-    });
+  it("같은 시드는 항상 같은 정답 ID를 만들고 사전 범위를 벗어나지 않는다", () => {
+    const wordCount = 280_804;
+    const first = selectAnswerWordId(20260806, wordCount);
+
+    expect(selectAnswerWordId(20260806, wordCount)).toBe(first);
+    expect(selectAnswerWordId(123456789, wordCount)).toBe(35475);
+    expect(first).toBeGreaterThanOrEqual(0);
+    expect(first).toBeLessThan(wordCount);
+    expect(new Set([0, 1, 2, 3].map((seed) => selectAnswerWordId(seed, wordCount))).size).toBe(4);
   });
 });
 
@@ -84,7 +85,7 @@ describe("적응형 힌트", () => {
 describe("결과 공유", () => {
   it("정답 단어 없이 게임 번호와 온도 흐름만 만든다", () => {
     const text = createShareText({
-      gameNumber: 7,
+      seed: 7,
       solved: true,
       attemptCount: 2,
       results: [
@@ -94,7 +95,7 @@ describe("결과 공유", () => {
       ],
     });
 
-    expect(text).toBe("한국어 Hot & Cold #7\n2번 만에 정답!\n🟦🟧💡");
+    expect(text).toBe("한국어 Hot & Cold · 시드 #7\n2번 만에 정답!\n🟦🟧💡");
     expect(text).not.toContain("가족");
   });
 });

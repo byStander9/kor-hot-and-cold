@@ -1,14 +1,14 @@
 import { expect, test } from "@playwright/test";
 
 test.beforeEach(async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/?seed=123456789&v=1");
   await page.evaluate(() => localStorage.clear());
   await page.reload();
 });
 
 test("조사가 붙은 추측을 판정하고 새로고침 뒤 복원한다", async ({ page }) => {
   await expect(
-    page.getByRole("heading", { name: "오늘의 비밀 단어를 찾아보세요." }),
+    page.getByRole("heading", { name: "시드의 비밀 단어를 찾아보세요." }),
   ).toBeVisible();
 
   await page.getByLabel("어떤 단어가 떠오르나요?").fill("바다가");
@@ -23,16 +23,17 @@ test("조사가 붙은 추측을 판정하고 새로고침 뒤 복원한다", as
 });
 
 test("공개 게임 메타와 별칭 API가 정답을 노출하지 않는다", async ({ request }) => {
-  const gameResponse = await request.get("/api/game");
+  const gameResponse = await request.get("/api/game?seed=123456789&v=1");
   expect(gameResponse.ok()).toBe(true);
   const game = (await gameResponse.json()) as Record<string, unknown>;
-  expect(game).toHaveProperty("gameNumber");
+  expect(game).toMatchObject({ seed: 123456789, version: 1 });
   expect(game.wordCount).toBeGreaterThan(250_000);
   expect(game).not.toHaveProperty("answer");
   expect(game).not.toHaveProperty("puzzleId");
+  expect(game).not.toHaveProperty("answerWordId");
 
   const guessResponse = await request.post("/api/guess", {
-    data: { guess: "바다가" },
+    data: { guess: "바다가", seed: 123456789, version: 1 },
   });
   expect(guessResponse.ok()).toBe(true);
   const guess = (await guessResponse.json()) as Record<string, unknown>;
@@ -41,18 +42,18 @@ test("공개 게임 메타와 별칭 API가 정답을 노출하지 않는다", a
 });
 
 test("힌트는 현재 최고 기록보다 높은 순위를 반환한다", async ({ request }) => {
-  const game = (await (await request.get("/api/game")).json()) as {
+  const game = (await (await request.get("/api/game?seed=123456789&v=1")).json()) as {
     wordCount: number;
   };
   const firstHintResponse = await request.post("/api/hint", {
-    data: { bestRank: game.wordCount + 1 },
+    data: { bestRank: game.wordCount + 1, seed: 123456789, version: 1 },
   });
   expect(firstHintResponse.ok()).toBe(true);
   const firstHint = (await firstHintResponse.json()) as { rank: number };
   expect(firstHint.rank).toBeLessThan(game.wordCount + 1);
 
   const nextHintResponse = await request.post("/api/hint", {
-    data: { bestRank: firstHint.rank },
+    data: { bestRank: firstHint.rank, seed: 123456789, version: 1 },
   });
   expect(nextHintResponse.ok()).toBe(true);
   const nextHint = (await nextHintResponse.json()) as { rank: number };
@@ -60,10 +61,12 @@ test("힌트는 현재 최고 기록보다 높은 순위를 반환한다", async
 });
 
 test("정답 공개와 정답 추측 뒤 전체 순위를 반환한다", async ({ request }) => {
-  const game = (await (await request.get("/api/game")).json()) as {
+  const game = (await (await request.get("/api/game?seed=123456789&v=1")).json()) as {
     wordCount: number;
   };
-  const revealResponse = await request.post("/api/reveal");
+  const revealResponse = await request.post("/api/reveal", {
+    data: { seed: 123456789, version: 1 },
+  });
   expect(revealResponse.ok()).toBe(true);
   const reveal = (await revealResponse.json()) as {
     answer: string;
@@ -74,7 +77,7 @@ test("정답 공개와 정답 추측 뒤 전체 순위를 반환한다", async (
   expect(reveal.rankings.at(-1)?.rank).toBe(game.wordCount);
 
   const solvedResponse = await request.post("/api/guess", {
-    data: { guess: reveal.answer },
+    data: { guess: reveal.answer, seed: 123456789, version: 1 },
   });
   expect(solvedResponse.ok()).toBe(true);
   const solved = (await solvedResponse.json()) as {
@@ -83,6 +86,27 @@ test("정답 공개와 정답 추측 뒤 전체 순위를 반환한다", async (
   };
   expect(solved.solved).toBe(true);
   expect(solved.rankings).toEqual(reveal.rankings);
+});
+
+test("같은 시드를 직접 열고 랜덤 새 게임으로 전환한다", async ({ page }) => {
+  await expect(page.getByText("시드 #123456789")).toBeVisible();
+  await page.reload();
+  await expect(page).toHaveURL(/seed=123456789&v=1/);
+
+  await page.getByLabel("게임 시드").fill("777");
+  await page.getByRole("button", { name: "시드 열기" }).click();
+  await expect(page).toHaveURL(/seed=777&v=1/);
+  await expect(page.getByText("시드 #777")).toBeVisible();
+
+  await page.getByRole("button", { name: "랜덤 새 게임" }).click();
+  await expect(page).not.toHaveURL(/seed=777&v=1/);
+  await expect(page).toHaveURL(/\?seed=\d+&v=1/);
+});
+
+test("시드 없는 주소는 랜덤 시드 주소로 이동한다", async ({ page }) => {
+  await page.goto("/");
+  await expect(page).toHaveURL(/\?seed=\d+&v=1/);
+  await expect(page.getByLabel("게임 시드")).toHaveValue(/\d+/);
 });
 
 test("게임을 포기한 뒤 전체 순위표를 펼친다", async ({ page }) => {

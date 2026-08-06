@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import json
+from pathlib import Path
 from typing import Protocol, Sequence
 
 import numpy as np
@@ -12,6 +14,8 @@ from .lexicon import LexiconEntry
 MODEL_REPO_ID = "intfloat/multilingual-e5-small"
 MODEL_REVISION = "614241f622f53c4eeff9890bdc4f31cfecc418b3"
 MODEL_PREFIX = "query: "
+QUANTIZATION_SCALE = 127
+VECTOR_SHARD_SIZE = 50_000
 
 
 class Encoder(Protocol):
@@ -42,6 +46,54 @@ def encode_entries(entries: Sequence[LexiconEntry], encoder: Encoder) -> NDArray
         show_progress_bar=True,
     )
     return np.asarray(vectors, dtype=np.float32)
+
+
+def quantize_embeddings(vectors: NDArray[np.float32]) -> NDArray[np.int8]:
+    return np.rint(np.clip(vectors, -1.0, 1.0) * QUANTIZATION_SCALE).astype(np.int8)
+
+
+def write_embedding_shards(
+    output: Path,
+    vectors: NDArray[np.float32],
+    shard_size: int = VECTOR_SHARD_SIZE,
+) -> dict[str, object]:
+    if vectors.ndim != 2 or vectors.shape[0] == 0 or vectors.shape[1] == 0:
+        raise ValueError("임베딩은 비어 있지 않은 2차원 배열이어야 합니다.")
+    if shard_size < 1:
+        raise ValueError("분할 크기는 1 이상이어야 합니다.")
+
+    output.mkdir(parents=True, exist_ok=True)
+    for stale_shard in output.glob("vectors-*.bin"):
+        stale_shard.unlink()
+
+    quantized = quantize_embeddings(vectors)
+    shards: list[dict[str, object]] = []
+    for shard_index, start in enumerate(range(0, len(quantized), shard_size)):
+        shard = quantized[start : start + shard_size]
+        filename = f"vectors-{shard_index:03d}.bin"
+        (output / filename).write_bytes(shard.tobytes(order="C"))
+        shards.append(
+            {
+                "file": filename,
+                "startWordId": start,
+                "wordCount": len(shard),
+            }
+        )
+
+    metadata: dict[str, object] = {
+        "version": 1,
+        "format": "int8-row-major",
+        "dimensions": vectors.shape[1],
+        "scale": QUANTIZATION_SCALE,
+        "wordCount": vectors.shape[0],
+        "model": {"repoId": MODEL_REPO_ID, "revision": MODEL_REVISION},
+        "shards": shards,
+    }
+    (output / "vectors.json").write_text(
+        json.dumps(metadata, ensure_ascii=False, separators=(",", ":")),
+        encoding="utf-8",
+    )
+    return metadata
 
 
 def create_ranking(
