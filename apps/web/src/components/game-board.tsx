@@ -13,6 +13,7 @@ type GuessResult = {
     level: number;
   };
   solved: boolean;
+  source?: "guess" | "hint";
 };
 
 type Props = {
@@ -24,17 +25,21 @@ export default function GameBoard({ wordCount }: Props) {
   const [guesses, setGuesses] = useState<GuessResult[]>([]);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hintCount, setHintCount] = useState(0);
+  const [revealedAnswer, setRevealedAnswer] = useState("");
 
+  const attemptCount = guesses.filter((guess) => guess.source !== "hint").length;
   const bestRank = guesses.reduce(
     (best, guess) => Math.min(best, guess.rank),
     wordCount,
   );
   const solved = guesses.some((guess) => guess.solved);
+  const finished = solved || Boolean(revealedAnswer);
 
   async function submitGuess(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const candidate = input.trim();
-    if (!candidate || isSubmitting || solved) return;
+    if (!candidate || isSubmitting || finished) return;
 
     if (guesses.some((guess) => guess.guess === candidate.replace(/\s+/g, ""))) {
       setError("이미 확인한 단어예요.");
@@ -57,10 +62,65 @@ export default function GameBoard({ wordCount }: Props) {
         return;
       }
 
-      setGuesses((current) => [data, ...current]);
+      setGuesses((current) => [{ ...data, source: "guess" }, ...current]);
       setInput("");
     } catch {
       setError("서버에 연결하지 못했습니다. 잠시 뒤 다시 시도해 주세요.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function requestHint() {
+    if (hintCount >= 3 || isSubmitting || finished) return;
+    setIsSubmitting(true);
+    setError("");
+
+    try {
+      const response = await fetch("/api/hint", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ hintIndex: hintCount }),
+      });
+      const data = (await response.json()) as GuessResult | { error: string };
+
+      if (!response.ok || "error" in data) {
+        setError("error" in data ? data.error : "힌트를 불러오지 못했습니다.");
+        return;
+      }
+
+      setHintCount((count) => count + 1);
+      setGuesses((current) =>
+        current.some((guess) => guess.guess === data.guess)
+          ? current
+          : [{ ...data, source: "hint" }, ...current],
+      );
+    } catch {
+      setError("힌트를 불러오지 못했습니다. 잠시 뒤 다시 시도해 주세요.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function giveUp() {
+    if (isSubmitting || finished) return;
+    if (!window.confirm("오늘의 정답을 확인하고 게임을 끝낼까요?")) return;
+
+    setIsSubmitting(true);
+    setError("");
+
+    try {
+      const response = await fetch("/api/reveal", { method: "POST" });
+      const data = (await response.json()) as { answer?: string; error?: string };
+
+      if (!response.ok || !data.answer) {
+        setError(data.error || "정답을 불러오지 못했습니다.");
+        return;
+      }
+
+      setRevealedAnswer(data.answer);
+    } catch {
+      setError("정답을 불러오지 못했습니다. 잠시 뒤 다시 시도해 주세요.");
     } finally {
       setIsSubmitting(false);
     }
@@ -78,7 +138,13 @@ export default function GameBoard({ wordCount }: Props) {
         <div className={styles.solved} role="status">
           <span className={styles.solvedMark}>정답!</span>
           <strong>{guesses.find((guess) => guess.solved)?.guess}</strong>
-          <p>{guesses.length}번 만에 오늘의 단어를 찾았습니다.</p>
+          <p>{attemptCount}번 만에 오늘의 단어를 찾았습니다.</p>
+        </div>
+      ) : revealedAnswer ? (
+        <div className={styles.revealed} role="status">
+          <span>오늘의 정답</span>
+          <strong>{revealedAnswer}</strong>
+          <p>내일 새로운 단어로 다시 만나요.</p>
         </div>
       ) : (
         <form className={styles.form} onSubmit={submitGuess}>
@@ -109,10 +175,25 @@ export default function GameBoard({ wordCount }: Props) {
         </form>
       )}
 
+      {!finished ? (
+        <div className={styles.actions}>
+          <button
+            type="button"
+            onClick={requestHint}
+            disabled={isSubmitting || hintCount >= 3}
+          >
+            힌트 보기 <span>{hintCount}/3</span>
+          </button>
+          <button type="button" onClick={giveUp} disabled={isSubmitting}>
+            포기하고 정답 보기
+          </button>
+        </div>
+      ) : null}
+
       <div className={styles.summary} aria-live="polite">
         <div>
           <span>시도</span>
-          <strong>{guesses.length}</strong>
+          <strong>{attemptCount}</strong>
         </div>
         <div>
           <span>최고 순위</span>
@@ -140,7 +221,12 @@ export default function GameBoard({ wordCount }: Props) {
 
                 return (
                   <tr key={guess.guess}>
-                    <th scope="row">{guess.guess}</th>
+                    <th scope="row">
+                      {guess.guess}
+                      {guess.source === "hint" ? (
+                        <span className={styles.hintBadge}>힌트</span>
+                      ) : null}
+                    </th>
                     <td>
                       <span
                         className={styles.temperature}

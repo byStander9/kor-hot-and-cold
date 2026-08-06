@@ -75,6 +75,27 @@
 .help { color: var(--muted); }
 .error { color: var(--hot-dark); font-weight: 650; }
 
+.actions {
+  display: flex;
+  justify-content: space-between;
+  margin: -2px 32px 22px;
+}
+
+.actions button {
+  padding: 6px 2px;
+  color: var(--muted);
+  border: 0;
+  background: transparent;
+  font-size: 0.76rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.actions button:first-child { color: var(--cold-dark); }
+.actions button:hover:not(:disabled) { text-decoration: underline; text-underline-offset: 3px; }
+.actions button:disabled { cursor: not-allowed; opacity: 0.45; }
+.actions span { font-variant-numeric: tabular-nums; }
+
 .summary {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -109,6 +130,19 @@
 
 .rank { text-align: right !important; font-variant-numeric: tabular-nums; font-size: 0.86rem; font-weight: 750; }
 
+.hintBadge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 5px;
+  color: var(--cold-dark);
+  border: 1px solid rgba(35, 118, 210, 0.25);
+  border-radius: 5px;
+  background: rgba(35, 118, 210, 0.06);
+  font-size: 0.58rem;
+  font-weight: 800;
+  vertical-align: 2px;
+}
+
 .empty { display: grid; place-items: center; min-height: 180px; padding: 24px; color: var(--muted); border-top: 1px solid var(--line); text-align: center; }
 .empty span { display: grid; place-items: center; width: 42px; height: 42px; margin-bottom: -26px; color: var(--muted); border: 1px dashed #bbb8b0; border-radius: 50%; font-weight: 800; }
 .empty p { font-size: 0.84rem; }
@@ -118,6 +152,20 @@
 .solved strong { display: block; font-size: 2rem; letter-spacing: -0.05em; }
 .solved p { margin: 8px 0 0; font-size: 0.84rem; opacity: 0.88; }
 
+.revealed {
+  margin: 30px 32px 18px;
+  padding: 28px;
+  color: var(--ink);
+  border: 1px dashed #bbb8b0;
+  border-radius: 18px;
+  background: #f6f4ef;
+  text-align: center;
+}
+
+.revealed span { display: block; color: var(--muted); font-size: 0.72rem; font-weight: 750; }
+.revealed strong { display: block; margin-top: 6px; font-size: 2rem; letter-spacing: -0.05em; }
+.revealed p { margin: 8px 0 0; color: var(--muted); font-size: 0.84rem; }
+
 .srOnly { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
 @media (max-width: 560px) {
@@ -126,7 +174,8 @@
   .inputRow { grid-template-columns: 1fr; }
   .inputRow button { width: 100%; }
   .summary { margin: 0 18px 18px; }
+  .actions { margin-right: 18px; margin-left: 18px; }
   .tableWrap th, .tableWrap td { padding: 14px 12px; }
   .rankBar { display: none; }
-  .solved { margin: 24px 18px 16px; }
+  .solved, .revealed { margin: 24px 18px 16px; }
 }

@@ -62,12 +62,13 @@ export function getTodayGame(now = new Date()) {
   };
 }
 
-export function judgeGuess(guess: string, now = new Date()) {
-  const word = wordByText.get(guess);
-  if (!word) return null;
-
+function getTodayPuzzle(now = new Date()) {
   const game = getTodayGame(now);
   const puzzle = readJson<Puzzle>(`puzzles/${game.puzzleId}.json`);
+  return { game, puzzle };
+}
+
+function makeGuessResult(word: DictionaryWord, puzzle: Puzzle) {
   const rank = puzzle.ranks[word.id];
 
   if (!Number.isInteger(rank)) {
@@ -81,4 +82,30 @@ export function judgeGuess(guess: string, now = new Date()) {
     temperature: getTemperature(rank),
     solved: word.id === puzzle.answerWordId,
   };
+}
+
+export function judgeGuess(guess: string, now = new Date()) {
+  const word = wordByText.get(guess);
+  if (!word) return null;
+
+  const { puzzle } = getTodayPuzzle(now);
+  return makeGuessResult(word, puzzle);
+}
+
+export function getHint(hintIndex: number, now = new Date()) {
+  const { puzzle } = getTodayPuzzle(now);
+  const wordId = puzzle.hintWordIds[hintIndex];
+  const word = dictionary.words[wordId];
+  return word ? makeGuessResult(word, puzzle) : null;
+}
+
+export function revealAnswer(now = new Date()) {
+  const { puzzle } = getTodayPuzzle(now);
+  const answer = dictionary.words[puzzle.answerWordId];
+
+  if (!answer) {
+    throw new Error(`퍼즐 ${puzzle.id}의 정답을 사전에서 찾지 못했습니다.`);
+  }
+
+  return { answer: answer.word };
 }
