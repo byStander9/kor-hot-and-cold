@@ -50,10 +50,6 @@ def build_aliases(entries: list[LexiconEntry], kiwi: Kiwi | None = None) -> dict
     for entry in entries:
         parts = set(entry.pos.split("/"))
 
-        if "명사" in parts:
-            for particle in noun_particles(entry.word):
-                candidates[f"{entry.word}{particle}"].add(entry.word_id)
-
         tag = "VV" if "동사" in parts else "VA" if "형용사" in parts else None
         if not tag or not entry.word.endswith("다"):
             continue

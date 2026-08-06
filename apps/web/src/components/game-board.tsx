@@ -46,6 +46,7 @@ type StoredGame = {
 };
 
 const STORAGE_PREFIX = "kor-hot-and-cold:game:v1";
+const RANKING_PAGE_SIZE = 500;
 
 function loadStoredGame(date: string, wordCount: number) {
   try {
@@ -104,6 +105,7 @@ export default function GameBoard({ wordCount, gameDate, gameNumber }: Props) {
   const [shareMessage, setShareMessage] = useState("");
   const [allRankings, setAllRankings] = useState<RankingEntry[]>([]);
   const [showAllRankings, setShowAllRankings] = useState(false);
+  const [rankingPage, setRankingPage] = useState(0);
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
@@ -149,6 +151,12 @@ export default function GameBoard({ wordCount, gameDate, gameNumber }: Props) {
   const solved = guesses.some((guess) => guess.solved);
   const finished = solved || gaveUp;
   const rankedGuesses = sortByRank(guesses);
+  const rankingPageCount = Math.ceil(allRankings.length / RANKING_PAGE_SIZE);
+  const rankingStart = rankingPage * RANKING_PAGE_SIZE;
+  const visibleRankings = allRankings.slice(
+    rankingStart,
+    rankingStart + RANKING_PAGE_SIZE,
+  );
 
   async function submitGuess(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -260,6 +268,7 @@ export default function GameBoard({ wordCount, gameDate, gameNumber }: Props) {
     }
 
     if (allRankings.length > 0) {
+      setRankingPage(0);
       setShowAllRankings(true);
       return;
     }
@@ -282,6 +291,7 @@ export default function GameBoard({ wordCount, gameDate, gameNumber }: Props) {
 
       if (data.answer) setRevealedAnswer(data.answer);
       setAllRankings(data.rankings);
+      setRankingPage(0);
       setShowAllRankings(true);
     } catch {
       setShareMessage(
@@ -485,7 +495,7 @@ export default function GameBoard({ wordCount, gameDate, gameNumber }: Props) {
                 </tr>
               </thead>
               <tbody>
-                {allRankings.map((entry) => (
+                {visibleRankings.map((entry) => (
                   <tr key={entry.word}>
                     <td className={styles.rank}>
                       {entry.rank.toLocaleString("ko-KR")}위
@@ -496,6 +506,42 @@ export default function GameBoard({ wordCount, gameDate, gameNumber }: Props) {
               </tbody>
             </table>
           </div>
+          <nav className={styles.rankingPagination} aria-label="전체 순위 페이지">
+            <button
+              type="button"
+              onClick={() => setRankingPage(0)}
+              disabled={rankingPage === 0}
+            >
+              처음
+            </button>
+            <button
+              type="button"
+              onClick={() => setRankingPage((page) => Math.max(0, page - 1))}
+              disabled={rankingPage === 0}
+            >
+              이전
+            </button>
+            <span aria-live="polite">
+              {rankingPage + 1}/{rankingPageCount} 페이지 · {rankingStart + 1}–
+              {Math.min(rankingStart + RANKING_PAGE_SIZE, allRankings.length)}위
+            </span>
+            <button
+              type="button"
+              onClick={() =>
+                setRankingPage((page) => Math.min(rankingPageCount - 1, page + 1))
+              }
+              disabled={rankingPage >= rankingPageCount - 1}
+            >
+              다음
+            </button>
+            <button
+              type="button"
+              onClick={() => setRankingPage(rankingPageCount - 1)}
+              disabled={rankingPage >= rankingPageCount - 1}
+            >
+              마지막
+            </button>
+          </nav>
         </section>
       ) : null}
     </section>

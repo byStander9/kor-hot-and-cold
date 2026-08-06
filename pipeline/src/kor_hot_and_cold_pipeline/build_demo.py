@@ -5,7 +5,15 @@ import json
 from pathlib import Path
 
 from .aliases import build_aliases
-from .lexicon import build_lexicon, download_dictionary
+from .lexicon import (
+    DATASET_REPO_ID,
+    DATASET_REVISION,
+    STANDARD_DATASET_REPO_ID,
+    STANDARD_DATASET_REVISION,
+    build_lexicon,
+    download_dictionary,
+    download_standard_dictionary,
+)
 from .ranking import MODEL_REPO_ID, MODEL_REVISION, create_ranking, encode_entries, load_encoder
 
 
@@ -41,6 +49,9 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="공개 자료로 데모용 순위 데이터를 만듭니다.")
     parser.add_argument("--source", type=Path, help="이미 내려받은 사전 CSV 경로")
     parser.add_argument(
+        "--standard-source", type=Path, help="이미 내려받은 표준국어대사전 Parquet 경로"
+    )
+    parser.add_argument(
         "--output",
         type=Path,
         default=repo_root() / "data" / "demo",
@@ -60,7 +71,8 @@ def write_json(path: Path, value: object) -> None:
 def main() -> int:
     args = parse_args()
     source_path = args.source or download_dictionary()
-    entries = build_lexicon(source_path)
+    standard_source_path = args.standard_source or download_standard_dictionary()
+    entries = build_lexicon(source_path, standard_source_path)
     encoder = load_encoder()
     vectors = encode_entries(entries, encoder)
 
@@ -68,10 +80,13 @@ def main() -> int:
         args.output / "dictionary.json",
         {
             "version": 1,
-            "source": {
-                "repo_id": "binjang/NIKL-korean-english-dictionary",
-                "revision": "3b4cfd2126debfd5440cade3ef6c2a3c20cf7cf9",
-            },
+            "sources": [
+                {"repo_id": DATASET_REPO_ID, "revision": DATASET_REVISION},
+                {
+                    "repo_id": STANDARD_DATASET_REPO_ID,
+                    "revision": STANDARD_DATASET_REVISION,
+                },
+            ],
             "words": [
                 {
                     "id": entry.word_id,

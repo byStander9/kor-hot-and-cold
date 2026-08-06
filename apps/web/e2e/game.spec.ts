@@ -27,7 +27,7 @@ test("공개 게임 메타와 별칭 API가 정답을 노출하지 않는다", a
   expect(gameResponse.ok()).toBe(true);
   const game = (await gameResponse.json()) as Record<string, unknown>;
   expect(game).toHaveProperty("gameNumber");
-  expect(game).toHaveProperty("wordCount", 4851);
+  expect(game.wordCount).toBeGreaterThan(250_000);
   expect(game).not.toHaveProperty("answer");
   expect(game).not.toHaveProperty("puzzleId");
 
@@ -41,12 +41,15 @@ test("공개 게임 메타와 별칭 API가 정답을 노출하지 않는다", a
 });
 
 test("힌트는 현재 최고 기록보다 높은 순위를 반환한다", async ({ request }) => {
+  const game = (await (await request.get("/api/game")).json()) as {
+    wordCount: number;
+  };
   const firstHintResponse = await request.post("/api/hint", {
-    data: { bestRank: 4852 },
+    data: { bestRank: game.wordCount + 1 },
   });
   expect(firstHintResponse.ok()).toBe(true);
   const firstHint = (await firstHintResponse.json()) as { rank: number };
-  expect(firstHint.rank).toBeLessThan(4852);
+  expect(firstHint.rank).toBeLessThan(game.wordCount + 1);
 
   const nextHintResponse = await request.post("/api/hint", {
     data: { bestRank: firstHint.rank },
@@ -57,15 +60,18 @@ test("힌트는 현재 최고 기록보다 높은 순위를 반환한다", async
 });
 
 test("정답 공개와 정답 추측 뒤 전체 순위를 반환한다", async ({ request }) => {
+  const game = (await (await request.get("/api/game")).json()) as {
+    wordCount: number;
+  };
   const revealResponse = await request.post("/api/reveal");
   expect(revealResponse.ok()).toBe(true);
   const reveal = (await revealResponse.json()) as {
     answer: string;
     rankings: Array<{ word: string; rank: number }>;
   };
-  expect(reveal.rankings).toHaveLength(4851);
+  expect(reveal.rankings).toHaveLength(game.wordCount);
   expect(reveal.rankings[0]).toEqual({ word: reveal.answer, rank: 1 });
-  expect(reveal.rankings.at(-1)?.rank).toBe(4851);
+  expect(reveal.rankings.at(-1)?.rank).toBe(game.wordCount);
 
   const solvedResponse = await request.post("/api/guess", {
     data: { guess: reveal.answer },
@@ -85,6 +91,10 @@ test("게임을 포기한 뒤 전체 순위표를 펼친다", async ({ page }) =
   await page.getByRole("button", { name: "전체 순위 보기" }).click();
 
   await expect(page.getByRole("heading", { name: "전체 순위" })).toBeVisible();
-  await expect(page.getByText("4,851개 단어 · 1위부터 정렬")).toBeVisible();
+  await expect(page.getByText("280,804개 단어 · 1위부터 정렬")).toBeVisible();
   await expect(page.getByRole("cell", { name: "1위", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "마지막" }).click();
+  await expect(
+    page.getByRole("cell", { name: "280,804위", exact: true }),
+  ).toBeVisible();
 });

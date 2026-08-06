@@ -28,4 +28,4 @@ def test_build_aliases_uses_kiwi_for_irregular_conjugation() -> None:
     assert aliases["들었어요"] == 0
     assert aliases["해요"] == 1
     assert aliases["예뻐요"] == 2
-    assert aliases["바다가"] == 3
+    assert "바다가" not in aliases

@@ -28,6 +28,26 @@ sources:
       derived: review_required
     status: candidate
 
+  - id: hf_standard_korean_dictionary
+    name: Standard Korean Dictionary (Hugging Face 변환본)
+    kind: dictionary_dataset
+    url: https://huggingface.co/datasets/hac541309/stdict_kor
+    hugging_face:
+      type: dataset
+      repo_id: hac541309/stdict_kor
+      revision: c76642c5ffc81b677ecc9971632abc7388e1264f
+    license:
+      id: cc-by-sa-3.0
+      declared_by: hugging_face_dataset_card
+      review_note: 데이터셋 카드는 국립국어원 원자료의 CC BY-SA 2.0 정책도 함께 명시한다.
+    use:
+      - 전체 표제어·품사·뜻풀이 확장
+      - 동형어 뜻풀이 병합과 의미 임베딩
+    redistribution:
+      raw: false
+      derived: allowed_with_attribution_and_share_alike
+    status: used
+
   - id: hf_multilingual_minilm
     name: paraphrase-multilingual-MiniLM-L12-v2
     kind: embedding_model
@@ -123,4 +143,3 @@ sources:
       binary: false
       derived: allowed
     status: candidate
-

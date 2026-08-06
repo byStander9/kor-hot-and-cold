@@ -64,6 +64,31 @@ const wordByText = new Map(dictionary.words.map((word) => [word.word, word]));
 const aliasWordIdByText = new Map(
   Object.entries(aliases.aliases).map(([alias, wordId]) => [alias, wordId]),
 );
+const nounParticles = [
+  "에게",
+  "에서",
+  "으로",
+  "부터",
+  "까지",
+  "은",
+  "는",
+  "이",
+  "가",
+  "을",
+  "를",
+  "과",
+  "와",
+  "로",
+  "도",
+  "만",
+  "의",
+  "에",
+] as const;
+const puzzleById = new Map<string, Puzzle>();
+const fullRankingByPuzzleId = new Map<
+  string,
+  Array<{ word: string; rank: number }>
+>();
 
 export function getTodayGame(now = new Date()) {
   const selection = selectScheduledPuzzle(schedule, getSeoulDateKey(now));
@@ -75,7 +100,11 @@ export function getTodayGame(now = new Date()) {
 
 function getTodayPuzzle(now = new Date()) {
   const game = getTodayGame(now);
-  const puzzle = readJson<Puzzle>(`puzzles/${game.puzzleId}.json`);
+  let puzzle = puzzleById.get(game.puzzleId);
+  if (!puzzle) {
+    puzzle = readJson<Puzzle>(`puzzles/${game.puzzleId}.json`);
+    puzzleById.set(game.puzzleId, puzzle);
+  }
   return { game, puzzle };
 }
 
@@ -95,11 +124,23 @@ function makeGuessResult(word: DictionaryWord, puzzle: Puzzle) {
   };
 }
 
+function findNounAliasWord(guess: string) {
+  for (const particle of nounParticles) {
+    if (!guess.endsWith(particle) || guess.length <= particle.length) continue;
+
+    const word = wordByText.get(guess.slice(0, -particle.length));
+    if (word?.pos.split("/").includes("명사")) return word;
+  }
+
+  return undefined;
+}
+
 export function judgeGuess(guess: string, now = new Date()) {
   const aliasWordId = aliasWordIdByText.get(guess);
   const word =
     wordByText.get(guess) ??
-    (aliasWordId === undefined ? undefined : dictionary.words[aliasWordId]);
+    (aliasWordId === undefined ? undefined : dictionary.words[aliasWordId]) ??
+    findNounAliasWord(guess);
   if (!word) return null;
 
   const { puzzle } = getTodayPuzzle(now);
@@ -116,10 +157,16 @@ export function getAdaptiveHint(bestRank: number, now = new Date()) {
 
 export function getFullRanking(now = new Date()) {
   const { puzzle } = getTodayPuzzle(now);
+  const cached = fullRankingByPuzzleId.get(puzzle.id);
+  if (cached) return cached;
 
-  return dictionary.words
-    .map((word) => ({ word: word.word, rank: puzzle.ranks[word.id] }))
-    .toSorted((left, right) => left.rank - right.rank);
+  const ranking = new Array<{ word: string; rank: number }>(dictionary.words.length);
+  for (const word of dictionary.words) {
+    const rank = puzzle.ranks[word.id];
+    ranking[rank - 1] = { word: word.word, rank };
+  }
+  fullRankingByPuzzleId.set(puzzle.id, ranking);
+  return ranking;
 }
 
 export function revealAnswer(now = new Date()) {

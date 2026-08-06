@@ -183,6 +183,18 @@
 .fullRankingTable tbody th { font-size: 0.88rem; }
 .fullRankingTable .rank { width: 28%; text-align: left !important; }
 
+.rankingPagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 18px 18px;
+  border-top: 1px solid var(--line);
+}
+.rankingPagination button { padding: 7px 9px; border: 1px solid var(--line); border-radius: 8px; background: white; cursor: pointer; }
+.rankingPagination button:disabled { cursor: not-allowed; opacity: 0.4; }
+.rankingPagination span { color: var(--muted); font-size: 0.72rem; font-variant-numeric: tabular-nums; }
+
 .solved { margin: 30px 32px 18px; padding: 28px; color: white; border-radius: 18px; background: linear-gradient(135deg, var(--hot-dark), var(--hot) 60%, var(--warm)); text-align: center; }
 .solvedMark { display: block; margin-bottom: 6px; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.12em; }
 .solved strong { display: block; font-size: 2rem; letter-spacing: -0.05em; }
@@ -215,6 +227,7 @@
   .tableWrap th, .tableWrap td { padding: 14px 12px; }
   .fullRanking header { padding-right: 18px; padding-left: 18px; }
   .fullRankingTable th, .fullRankingTable td { padding-right: 18px; padding-left: 18px; }
+  .rankingPagination { flex-wrap: wrap; }
   .rankBar { display: none; }
   .solved, .revealed { margin: 24px 18px 16px; }
 }

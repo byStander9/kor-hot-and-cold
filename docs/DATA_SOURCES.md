@@ -16,9 +16,10 @@
 | 상태 | 자료 | Hub 표시 라이선스 | 판단 |
 |---|---|---|---|
 | 후보 | `binjang/NIKL-korean-english-dictionary` | MIT | 필드가 목적에 잘 맞지만 국립국어원 원자료 조건을 재확인해야 함 |
+| 사용 | `hac541309/stdict_kor` | CC BY-SA 3.0 | 표준국어대사전 변환본이며 원자료의 CC BY-SA 2.0 정책도 함께 준수 |
 | 후보 | `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` | Apache-2.0 | 한국어 포함 다국어 기준 모델로 비교 |
 | 후보 | `intfloat/multilingual-e5-small` | MIT | 정의 기반 검색 임베딩 후보로 비교 |
-| 사용 | `Kiwi/kiwipiepy` | LGPL-3.0 | 오프라인에서 조사·불규칙 활용형 별칭 생성 |
+| 사용 | `Kiwi/kiwipiepy` | LGPL-3.0 | 오프라인에서 불규칙 활용형 별칭 생성 |
 | 제외 | `BM-K/KoSimCSE-roberta-multitask` | 미표기 | 라이선스 확인 전 사용·배포하지 않음 |
 
 ## 메타데이터 검증
