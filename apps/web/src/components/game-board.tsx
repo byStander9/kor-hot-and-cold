@@ -18,6 +18,15 @@ type GuessResult = {
   source?: "guess" | "hint";
 };
 
+type RankingEntry = {
+  word: string;
+  rank: number;
+};
+
+type GuessResponse = GuessResult & {
+  rankings?: RankingEntry[];
+};
+
 type Props = {
   wordCount: number;
   gameDate: string;
@@ -93,6 +102,8 @@ export default function GameBoard({ wordCount, gameDate, gameNumber }: Props) {
   const [gaveUp, setGaveUp] = useState(false);
   const [storageReady, setStorageReady] = useState(false);
   const [shareMessage, setShareMessage] = useState("");
+  const [allRankings, setAllRankings] = useState<RankingEntry[]>([]);
+  const [showAllRankings, setShowAllRankings] = useState(false);
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
@@ -158,7 +169,7 @@ export default function GameBoard({ wordCount, gameDate, gameNumber }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ guess: candidate }),
       });
-      const data = (await response.json()) as GuessResult | { error: string };
+      const data = (await response.json()) as GuessResponse | { error: string };
 
       if (!response.ok || "error" in data) {
         setError("error" in data ? data.error : "단어를 확인하지 못했습니다.");
@@ -172,6 +183,7 @@ export default function GameBoard({ wordCount, gameDate, gameNumber }: Props) {
       }
 
       setGuesses((current) => [{ ...data, source: "guess" }, ...current]);
+      if (data.rankings) setAllRankings(data.rankings);
       setInput("");
     } catch {
       setError("서버에 연결하지 못했습니다. 잠시 뒤 다시 시도해 주세요.");
@@ -220,17 +232,61 @@ export default function GameBoard({ wordCount, gameDate, gameNumber }: Props) {
 
     try {
       const response = await fetch("/api/reveal", { method: "POST" });
-      const data = (await response.json()) as { answer?: string; error?: string };
+      const data = (await response.json()) as {
+        answer?: string;
+        rankings?: RankingEntry[];
+        error?: string;
+      };
 
-      if (!response.ok || !data.answer) {
+      if (!response.ok || !data.answer || !data.rankings) {
         setError(data.error || "정답을 불러오지 못했습니다.");
         return;
       }
 
       setRevealedAnswer(data.answer);
+      setAllRankings(data.rankings);
       setGaveUp(true);
     } catch {
       setError("정답을 불러오지 못했습니다. 잠시 뒤 다시 시도해 주세요.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function toggleAllRankings() {
+    if (showAllRankings) {
+      setShowAllRankings(false);
+      return;
+    }
+
+    if (allRankings.length > 0) {
+      setShowAllRankings(true);
+      return;
+    }
+
+    setIsSubmitting(true);
+    setShareMessage("");
+
+    try {
+      const response = await fetch("/api/reveal", { method: "POST" });
+      const data = (await response.json()) as {
+        answer?: string;
+        rankings?: RankingEntry[];
+        error?: string;
+      };
+
+      if (!response.ok || !data.rankings) {
+        setShareMessage(data.error || "전체 순위를 불러오지 못했습니다.");
+        return;
+      }
+
+      if (data.answer) setRevealedAnswer(data.answer);
+      setAllRankings(data.rankings);
+      setShowAllRankings(true);
+    } catch {
+      setShareMessage(
+        "전체 순위를 불러오지 못했습니다. 잠시 뒤 다시 시도해 주세요.",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -330,6 +386,13 @@ export default function GameBoard({ wordCount, gameDate, gameNumber }: Props) {
           <button type="button" onClick={shareResult}>
             결과 공유하기
           </button>
+          <button
+            type="button"
+            onClick={toggleAllRankings}
+            disabled={isSubmitting}
+          >
+            {showAllRankings ? "전체 순위 닫기" : "전체 순위 보기"}
+          </button>
           <p aria-live="polite">{shareMessage}</p>
         </div>
       ) : null}
@@ -397,6 +460,44 @@ export default function GameBoard({ wordCount, gameDate, gameNumber }: Props) {
           <p>첫 단어를 입력하면 여기에 순위가 쌓여요.</p>
         </div>
       )}
+
+      {showAllRankings ? (
+        <section
+          className={styles.fullRanking}
+          aria-labelledby="full-ranking-title"
+        >
+          <header>
+            <h2 id="full-ranking-title">전체 순위</h2>
+            <p>
+              {allRankings.length.toLocaleString("ko-KR")}개 단어 · 1위부터
+              정렬
+            </p>
+          </header>
+          <div className={styles.fullRankingTable}>
+            <table>
+              <caption className={styles.srOnly}>
+                오늘의 모든 단어 의미 근접 순위
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">순위</th>
+                  <th scope="col">단어</th>
+                </tr>
+              </thead>
+              <tbody>
+                {allRankings.map((entry) => (
+                  <tr key={entry.word}>
+                    <td className={styles.rank}>
+                      {entry.rank.toLocaleString("ko-KR")}위
+                    </td>
+                    <th scope="row">{entry.word}</th>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : null}
     </section>
   );
 }

@@ -114,6 +114,14 @@ export function getAdaptiveHint(bestRank: number, now = new Date()) {
   return word ? makeGuessResult(word, puzzle) : null;
 }
 
+export function getFullRanking(now = new Date()) {
+  const { puzzle } = getTodayPuzzle(now);
+
+  return dictionary.words
+    .map((word) => ({ word: word.word, rank: puzzle.ranks[word.id] }))
+    .toSorted((left, right) => left.rank - right.rank);
+}
+
 export function revealAnswer(now = new Date()) {
   const { puzzle } = getTodayPuzzle(now);
   const answer = dictionary.words[puzzle.answerWordId];

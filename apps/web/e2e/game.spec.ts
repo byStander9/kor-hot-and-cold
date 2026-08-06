@@ -55,3 +55,36 @@ test("힌트는 현재 최고 기록보다 높은 순위를 반환한다", async
   const nextHint = (await nextHintResponse.json()) as { rank: number };
   expect(nextHint.rank).toBeLessThan(firstHint.rank);
 });
+
+test("정답 공개와 정답 추측 뒤 전체 순위를 반환한다", async ({ request }) => {
+  const revealResponse = await request.post("/api/reveal");
+  expect(revealResponse.ok()).toBe(true);
+  const reveal = (await revealResponse.json()) as {
+    answer: string;
+    rankings: Array<{ word: string; rank: number }>;
+  };
+  expect(reveal.rankings).toHaveLength(4851);
+  expect(reveal.rankings[0]).toEqual({ word: reveal.answer, rank: 1 });
+  expect(reveal.rankings.at(-1)?.rank).toBe(4851);
+
+  const solvedResponse = await request.post("/api/guess", {
+    data: { guess: reveal.answer },
+  });
+  expect(solvedResponse.ok()).toBe(true);
+  const solved = (await solvedResponse.json()) as {
+    solved: boolean;
+    rankings: Array<{ word: string; rank: number }>;
+  };
+  expect(solved.solved).toBe(true);
+  expect(solved.rankings).toEqual(reveal.rankings);
+});
+
+test("게임을 포기한 뒤 전체 순위표를 펼친다", async ({ page }) => {
+  page.on("dialog", (dialog) => dialog.accept());
+  await page.getByRole("button", { name: "포기하고 정답 보기" }).click();
+  await page.getByRole("button", { name: "전체 순위 보기" }).click();
+
+  await expect(page.getByRole("heading", { name: "전체 순위" })).toBeVisible();
+  await expect(page.getByText("4,851개 단어 · 1위부터 정렬")).toBeVisible();
+  await expect(page.getByRole("cell", { name: "1위", exact: true })).toBeVisible();
+});

@@ -115,6 +115,7 @@
 }
 
 .finishActions button:hover { border-color: var(--cold); color: var(--cold-dark); }
+.finishActions button:disabled { cursor: not-allowed; opacity: 0.45; }
 .finishActions p { margin: 0; color: var(--muted); font-size: 0.72rem; }
 
 .summary {
@@ -168,6 +169,20 @@
 .empty span { display: grid; place-items: center; width: 42px; height: 42px; margin-bottom: -26px; color: var(--muted); border: 1px dashed #bbb8b0; border-radius: 50%; font-weight: 800; }
 .empty p { font-size: 0.84rem; }
 
+.fullRanking { border-top: 1px solid var(--line); }
+.fullRanking header { padding: 22px 32px 16px; }
+.fullRanking h2 { margin: 0; font-size: 1rem; }
+.fullRanking header p { margin: 5px 0 0; color: var(--muted); font-size: 0.74rem; }
+.fullRankingTable { max-height: 620px; overflow: auto; }
+.fullRankingTable table { width: 100%; border-collapse: collapse; }
+.fullRankingTable th, .fullRankingTable td { padding: 12px 32px; text-align: left; }
+.fullRankingTable thead { position: sticky; z-index: 1; top: 0; background: #f6f4ef; }
+.fullRankingTable thead th { color: var(--muted); border-bottom: 1px solid var(--line); font-size: 0.7rem; }
+.fullRankingTable tbody tr { content-visibility: auto; contain-intrinsic-size: auto 45px; }
+.fullRankingTable tbody tr + tr { border-top: 1px solid #eeece6; }
+.fullRankingTable tbody th { font-size: 0.88rem; }
+.fullRankingTable .rank { width: 28%; text-align: left !important; }
+
 .solved { margin: 30px 32px 18px; padding: 28px; color: white; border-radius: 18px; background: linear-gradient(135deg, var(--hot-dark), var(--hot) 60%, var(--warm)); text-align: center; }
 .solvedMark { display: block; margin-bottom: 6px; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.12em; }
 .solved strong { display: block; font-size: 2rem; letter-spacing: -0.05em; }
@@ -198,6 +213,8 @@
   .actions { margin-right: 18px; margin-left: 18px; }
   .finishActions { align-items: flex-start; flex-direction: column; margin-right: 18px; margin-left: 18px; }
   .tableWrap th, .tableWrap td { padding: 14px 12px; }
+  .fullRanking header { padding-right: 18px; padding-left: 18px; }
+  .fullRankingTable th, .fullRankingTable td { padding-right: 18px; padding-left: 18px; }
   .rankBar { display: none; }
   .solved, .revealed { margin: 24px 18px 16px; }
 }
