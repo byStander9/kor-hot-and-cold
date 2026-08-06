@@ -4,7 +4,10 @@ version = "0.1.0"
 description = "한국어 Hot and Cold 데이터 수집·검증·순위 생성 파이프라인"
 requires-python = ">=3.11"
 dependencies = [
+  "huggingface-hub>=1.0,<2",
+  "numpy>=2.0,<3",
   "PyYAML>=6.0.2,<7",
+  "sentence-transformers>=5.0,<6",
 ]
 
 [project.optional-dependencies]
@@ -14,6 +17,7 @@ dev = [
 
 [project.scripts]
 verify-sources = "kor_hot_and_cold_pipeline.sources:main"
+build-demo-data = "kor_hot_and_cold_pipeline.build_demo:main"
 
 [build-system]
 requires = ["hatchling"]
@@ -25,4 +29,3 @@ packages = ["src/kor_hot_and_cold_pipeline"]
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
-
