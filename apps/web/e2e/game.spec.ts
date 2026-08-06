@@ -39,3 +39,19 @@ test("공개 게임 메타와 별칭 API가 정답을 노출하지 않는다", a
   expect(guess.guess).toBe("바다");
   expect(guess).not.toHaveProperty("answer");
 });
+
+test("힌트는 현재 최고 기록보다 높은 순위를 반환한다", async ({ request }) => {
+  const firstHintResponse = await request.post("/api/hint", {
+    data: { bestRank: 4852 },
+  });
+  expect(firstHintResponse.ok()).toBe(true);
+  const firstHint = (await firstHintResponse.json()) as { rank: number };
+  expect(firstHint.rank).toBeLessThan(4852);
+
+  const nextHintResponse = await request.post("/api/hint", {
+    data: { bestRank: firstHint.rank },
+  });
+  expect(nextHintResponse.ok()).toBe(true);
+  const nextHint = (await nextHintResponse.json()) as { rank: number };
+  expect(nextHint.rank).toBeLessThan(firstHint.rank);
+});

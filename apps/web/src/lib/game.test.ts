@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   createShareText,
+  getHintTargetRank,
   getSeoulDateKey,
   getTemperature,
   isValidGuess,
@@ -69,6 +70,14 @@ describe("추측 순위 정렬", () => {
 
     expect(sortByRank(guesses).map((guess) => guess.rank)).toEqual([1, 17, 120]);
     expect(guesses.map((guess) => guess.rank)).toEqual([120, 1, 17]);
+  });
+});
+
+describe("적응형 힌트", () => {
+  it("현재 최고 순위보다 항상 높은 목표 순위를 만든다", () => {
+    for (const bestRank of [2, 3, 10, 101, 1000, 4852]) {
+      expect(getHintTargetRank(bestRank)).toBeLessThan(bestRank);
+    }
   });
 });
 

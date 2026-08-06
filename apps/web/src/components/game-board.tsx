@@ -133,7 +133,7 @@ export default function GameBoard({ wordCount, gameDate, gameNumber }: Props) {
   const attemptCount = guesses.filter((guess) => guess.source !== "hint").length;
   const bestRank = guesses.reduce(
     (best, guess) => Math.min(best, guess.rank),
-    wordCount,
+    wordCount + 1,
   );
   const solved = guesses.some((guess) => guess.solved);
   const finished = solved || gaveUp;
@@ -189,7 +189,7 @@ export default function GameBoard({ wordCount, gameDate, gameNumber }: Props) {
       const response = await fetch("/api/hint", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ hintIndex: hintCount }),
+        body: JSON.stringify({ bestRank }),
       });
       const data = (await response.json()) as GuessResult | { error: string };
 

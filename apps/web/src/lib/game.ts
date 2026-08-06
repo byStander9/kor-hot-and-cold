@@ -73,6 +73,10 @@ export function sortByRank<T extends { rank: number }>(items: readonly T[]): T[]
   return items.toSorted((left, right) => left.rank - right.rank);
 }
 
+export function getHintTargetRank(bestRank: number): number {
+  return Math.max(1, Math.floor(bestRank / 2));
+}
+
 export function createShareText(options: {
   gameNumber: number;
   solved: boolean;

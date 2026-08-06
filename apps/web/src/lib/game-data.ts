@@ -5,6 +5,7 @@ import path from "node:path";
 
 import {
   getSeoulDateKey,
+  getHintTargetRank,
   getTemperature,
   selectScheduledPuzzle,
   type Schedule,
@@ -105,9 +106,10 @@ export function judgeGuess(guess: string, now = new Date()) {
   return makeGuessResult(word, puzzle);
 }
 
-export function getHint(hintIndex: number, now = new Date()) {
+export function getAdaptiveHint(bestRank: number, now = new Date()) {
   const { puzzle } = getTodayPuzzle(now);
-  const wordId = puzzle.hintWordIds[hintIndex];
+  const targetRank = getHintTargetRank(bestRank);
+  const wordId = puzzle.ranks.findIndex((rank) => rank === targetRank);
   const word = dictionary.words[wordId];
   return word ? makeGuessResult(word, puzzle) : null;
 }

@@ -1,7 +1,7 @@
-import { getHint } from "@/lib/game-data";
+import { getAdaptiveHint, getTodayGame } from "@/lib/game-data";
 
 type HintRequest = {
-  hintIndex?: unknown;
+  bestRank?: unknown;
 };
 
 export async function POST(request: Request) {
@@ -14,17 +14,17 @@ export async function POST(request: Request) {
   }
 
   if (
-    !Number.isInteger(body.hintIndex) ||
-    (body.hintIndex as number) < 0 ||
-    (body.hintIndex as number) > 2
+    !Number.isInteger(body.bestRank) ||
+    (body.bestRank as number) < 2 ||
+    (body.bestRank as number) > getTodayGame().wordCount + 1
   ) {
     return Response.json(
-      { error: "힌트 번호는 0부터 2 사이여야 합니다." },
+      { error: "현재 최고 순위가 올바르지 않습니다." },
       { status: 422 },
     );
   }
 
-  const hint = getHint(body.hintIndex as number);
+  const hint = getAdaptiveHint(body.bestRank as number);
   if (!hint) {
     return Response.json({ error: "사용 가능한 힌트가 없습니다." }, { status: 404 });
   }
