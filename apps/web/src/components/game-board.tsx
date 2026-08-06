@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 
-import { createShareText, getTemperature } from "@/lib/game";
+import { createShareText, getTemperature, sortByRank } from "@/lib/game";
 
 import styles from "./game-board.module.css";
 
@@ -137,6 +137,7 @@ export default function GameBoard({ wordCount, gameDate, gameNumber }: Props) {
   );
   const solved = guesses.some((guess) => guess.solved);
   const finished = solved || gaveUp;
+  const rankedGuesses = sortByRank(guesses);
 
   async function submitGuess(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -347,7 +348,9 @@ export default function GameBoard({ wordCount, gameDate, gameNumber }: Props) {
       {guesses.length > 0 ? (
         <div className={styles.tableWrap}>
           <table>
-            <caption className={styles.srOnly}>입력한 단어의 의미 근접 순위</caption>
+            <caption className={styles.srOnly}>
+              입력한 단어를 의미 근접 순위가 높은 순서로 정렬
+            </caption>
             <thead>
               <tr>
                 <th scope="col">단어</th>
@@ -356,7 +359,7 @@ export default function GameBoard({ wordCount, gameDate, gameNumber }: Props) {
               </tr>
             </thead>
             <tbody>
-              {guesses.map((guess) => {
+              {rankedGuesses.map((guess) => {
                 const closeness = Math.max(
                   3,
                   ((guess.total - guess.rank + 1) / guess.total) * 100,

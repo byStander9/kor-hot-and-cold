@@ -69,6 +69,10 @@ export function getTemperature(rank: number): Temperature {
   return { label: "차가움", level: 1 };
 }
 
+export function sortByRank<T extends { rank: number }>(items: readonly T[]): T[] {
+  return items.toSorted((left, right) => left.rank - right.rank);
+}
+
 export function createShareText(options: {
   gameNumber: number;
   solved: boolean;

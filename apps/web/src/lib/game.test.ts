@@ -7,6 +7,7 @@ import {
   isValidGuess,
   normalizeGuess,
   selectScheduledPuzzle,
+  sortByRank,
   type Schedule,
 } from "./game";
 
@@ -55,6 +56,19 @@ describe("온도 구간", () => {
     expect(getTemperature(100).label).toBe("뜨거움");
     expect(getTemperature(1000).label).toBe("따뜻함");
     expect(getTemperature(1001).label).toBe("차가움");
+  });
+});
+
+describe("추측 순위 정렬", () => {
+  it("원본 배열을 바꾸지 않고 정답에 가까운 순서로 정렬한다", () => {
+    const guesses = [
+      { guess: "바다", rank: 120 },
+      { guess: "가족", rank: 1 },
+      { guess: "사람", rank: 17 },
+    ];
+
+    expect(sortByRank(guesses).map((guess) => guess.rank)).toEqual([1, 17, 120]);
+    expect(guesses.map((guess) => guess.rank)).toEqual([120, 1, 17]);
   });
 });
 
