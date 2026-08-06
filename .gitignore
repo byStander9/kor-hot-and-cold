@@ -1,0 +1,36 @@
+# Node.js
+node_modules/
+.next/
+out/
+npm-debug.log*
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
+# 환경 변수와 인증 정보
+.env
+.env.*
+!.env.example
+
+# 대용량 원천 데이터와 생성 산출물
+data/raw/
+data/interim/
+data/releases/
+models/
+artifacts/
+
+# 테스트와 운영 산출물
+coverage/
+playwright-report/
+test-results/
+
+# 편집기와 운영체제
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
