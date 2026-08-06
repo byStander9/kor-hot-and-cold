@@ -1,0 +1,126 @@
+version: 1
+updated_at: 2026-08-06
+policy:
+  raw_data_in_git: false
+  require_pinned_revision: true
+  require_license_before_release: true
+  note: 외부 자료의 원 라이선스가 이 프로젝트의 MIT License보다 우선한다.
+
+sources:
+  - id: hf_nikl_korean_english_dictionary
+    name: NIKL Korean-English Dictionary (Hugging Face 변환본)
+    kind: dictionary_dataset
+    url: https://huggingface.co/datasets/binjang/NIKL-korean-english-dictionary
+    hugging_face:
+      type: dataset
+      repo_id: binjang/NIKL-korean-english-dictionary
+      revision: 3b4cfd2126debfd5440cade3ef6c2a3c20cf7cf9
+    license:
+      id: mit
+      declared_by: hugging_face_dataset_card
+      review_note: 변환본은 MIT로 표시되어 있으나 국립국어원 원자료 이용 조건도 공개 전 재확인한다.
+    use:
+      - 초기 표제어와 품사
+      - 한국어 뜻풀이 기반 임베딩 실험
+      - 어휘 난이도와 의미 범주 기반 정답 후보 필터
+    redistribution:
+      raw: false
+      derived: review_required
+    status: candidate
+
+  - id: hf_multilingual_minilm
+    name: paraphrase-multilingual-MiniLM-L12-v2
+    kind: embedding_model
+    url: https://huggingface.co/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+    hugging_face:
+      type: model
+      repo_id: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+      revision: e8f8c211226b894fcb81acc59f3b34ba3efd5f42
+    license:
+      id: apache-2.0
+      declared_by: hugging_face_model_card
+    use:
+      - 표제어 단독 임베딩 기준선
+      - 뜻풀이 임베딩 후보
+    redistribution:
+      weights: false
+      derived: allowed_with_attribution
+    status: candidate
+
+  - id: hf_multilingual_e5_small
+    name: multilingual-e5-small
+    kind: embedding_model
+    url: https://huggingface.co/intfloat/multilingual-e5-small
+    hugging_face:
+      type: model
+      repo_id: intfloat/multilingual-e5-small
+      revision: 614241f622f53c4eeff9890bdc4f31cfecc418b3
+    license:
+      id: mit
+      declared_by: hugging_face_model_card
+    use:
+      - 뜻풀이 검색형 임베딩 비교 후보
+    redistribution:
+      weights: false
+      derived: allowed_with_attribution
+    status: candidate
+
+  - id: hf_kosimcse_roberta_multitask
+    name: KoSimCSE-roberta-multitask
+    kind: embedding_model
+    url: https://huggingface.co/BM-K/KoSimCSE-roberta-multitask
+    license:
+      id: unknown
+      declared_by: none
+      review_note: Hub 메타데이터에 라이선스가 명시되지 않아 자동 파이프라인에서 제외한다.
+    use:
+      - 조사 전용 비교 후보
+    redistribution:
+      weights: false
+      derived: prohibited_until_review
+    status: excluded
+
+  - id: krdict_open_api
+    name: 국립국어원 한국어기초사전 Open API
+    kind: official_api
+    url: https://krdict.korean.go.kr/kor/openApi/openApiInfo
+    license:
+      id: terms-of-use
+      declared_by: provider
+      review_note: API 이용약관과 결과물 재배포 범위를 공개 전 확인한다.
+    use:
+      - 공식 표제어·품사·뜻풀이 교차 검증
+    redistribution:
+      raw: false
+      derived: review_required
+    status: candidate
+
+  - id: fasttext_korean_wiki_vectors
+    name: fastText 한국어 Wikipedia 벡터
+    kind: word_embedding
+    url: https://fasttext.cc/docs/en/pretrained-vectors
+    license:
+      id: cc-by-sa-3.0
+      declared_by: provider
+    use:
+      - 분포 기반 단어 임베딩 기준선
+    redistribution:
+      weights: false
+      derived: review_required
+    status: candidate
+
+  - id: kiwi
+    name: Kiwi 한국어 형태소 분석기
+    kind: software
+    url: https://github.com/bab2min/Kiwi
+    license:
+      id: lgpl-3.0
+      declared_by: repository
+    use:
+      - 활용형 기본형 복원
+      - 오프라인 별칭 생성
+    redistribution:
+      binary: false
+      derived: allowed
+    status: candidate
+
