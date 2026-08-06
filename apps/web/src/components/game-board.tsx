@@ -164,6 +164,12 @@ export default function GameBoard({ wordCount, gameDate, gameNumber }: Props) {
         return;
       }
 
+      if (guesses.some((guess) => guess.guess === data.guess)) {
+        setError(`이미 ${data.guess}의 순위를 확인했어요.`);
+        setInput("");
+        return;
+      }
+
       setGuesses((current) => [{ ...data, source: "guess" }, ...current]);
       setInput("");
     } catch {
@@ -298,7 +304,7 @@ export default function GameBoard({ wordCount, gameDate, gameNumber }: Props) {
             className={error ? styles.error : styles.help}
             aria-live="polite"
           >
-            {error || "명사·동사·형용사의 사전 기본형을 입력하세요."}
+            {error || "기본형뿐 아니라 자주 쓰는 조사·활용형도 입력할 수 있어요."}
           </p>
         </form>
       )}

@@ -41,8 +41,8 @@ export default function Home() {
           비교했습니다. 반대말도 비슷한 문맥에서 자주 쓰이면 가깝게 나올 수 있어요.
         </p>
         <p className={styles.sourceNote}>
-          현재 데모 어휘 {game.wordCount.toLocaleString("ko-KR")}개 · 입력은 사전
-          기본형을 사용해 주세요.
+          현재 데모 어휘 {game.wordCount.toLocaleString("ko-KR")}개 · 조사와 자주 쓰는
+          활용형은 기본형으로 자동 연결합니다.
         </p>
       </aside>
     </main>

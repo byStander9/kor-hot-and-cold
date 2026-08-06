@@ -5,6 +5,7 @@ description = "한국어 Hot and Cold 데이터 수집·검증·순위 생성 �
 requires-python = ">=3.11"
 dependencies = [
   "huggingface-hub>=1.0,<2",
+  "kiwipiepy>=0.22,<0.23",
   "numpy>=2.0,<3",
   "PyYAML>=6.0.2,<7",
   "sentence-transformers>=5.0,<6",

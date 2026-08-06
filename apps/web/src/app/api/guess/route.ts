@@ -41,7 +41,7 @@ export async function POST(request: Request) {
   const result = judgeGuess(guess);
   if (!result) {
     return Response.json(
-      { error: "현재 게임 사전에 없는 단어입니다. 기본형으로 다시 시도해 주세요." },
+      { error: "현재 게임 사전에 없거나 아직 지원하지 않는 활용형입니다." },
       { status: 404 },
     );
   }

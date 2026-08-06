@@ -23,6 +23,12 @@ type Dictionary = {
   words: DictionaryWord[];
 };
 
+type Aliases = {
+  version: number;
+  count: number;
+  aliases: Record<string, number>;
+};
+
 type Puzzle = {
   version: number;
   id: string;
@@ -51,8 +57,12 @@ function readJson<T>(relativePath: string): T {
 }
 
 const dictionary = readJson<Dictionary>("dictionary.json");
+const aliases = readJson<Aliases>("aliases.json");
 const schedule = readJson<Schedule>("schedule.json");
 const wordByText = new Map(dictionary.words.map((word) => [word.word, word]));
+const aliasWordIdByText = new Map(
+  Object.entries(aliases.aliases).map(([alias, wordId]) => [alias, wordId]),
+);
 
 export function getTodayGame(now = new Date()) {
   const selection = selectScheduledPuzzle(schedule, getSeoulDateKey(now));
@@ -85,7 +95,10 @@ function makeGuessResult(word: DictionaryWord, puzzle: Puzzle) {
 }
 
 export function judgeGuess(guess: string, now = new Date()) {
-  const word = wordByText.get(guess);
+  const aliasWordId = aliasWordIdByText.get(guess);
+  const word =
+    wordByText.get(guess) ??
+    (aliasWordId === undefined ? undefined : dictionary.words[aliasWordId]);
   if (!word) return null;
 
   const { puzzle } = getTodayPuzzle(now);

@@ -18,6 +18,7 @@
 | 후보 | `binjang/NIKL-korean-english-dictionary` | MIT | 필드가 목적에 잘 맞지만 국립국어원 원자료 조건을 재확인해야 함 |
 | 후보 | `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` | Apache-2.0 | 한국어 포함 다국어 기준 모델로 비교 |
 | 후보 | `intfloat/multilingual-e5-small` | MIT | 정의 기반 검색 임베딩 후보로 비교 |
+| 사용 | `Kiwi/kiwipiepy` | LGPL-3.0 | 오프라인에서 조사·불규칙 활용형 별칭 생성 |
 | 제외 | `BM-K/KoSimCSE-roberta-multitask` | 미표기 | 라이선스 확인 전 사용·배포하지 않음 |
 
 ## 메타데이터 검증
@@ -37,4 +38,3 @@ uv run pytest
 - 원자료 이용약관이 재배포를 허용하지 않는 원문
 - Hugging Face가 별도 배포하는 모델 가중치
 - 생성 중간 파일, 전체 임베딩 행렬, 개인 플레이 로그
-

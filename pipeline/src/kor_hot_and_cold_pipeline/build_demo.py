@@ -4,6 +4,7 @@ import argparse
 import json
 from pathlib import Path
 
+from .aliases import build_aliases
 from .lexicon import build_lexicon, download_dictionary
 from .ranking import MODEL_REPO_ID, MODEL_REVISION, create_ranking, encode_entries, load_encoder
 
@@ -83,6 +84,19 @@ def main() -> int:
             ],
         },
     )
+    aliases = build_aliases(entries)
+    write_json(
+        args.output / "aliases.json",
+        {
+            "version": 1,
+            "source": {
+                "software": "Kiwi/kiwipiepy",
+                "license": "LGPL-3.0",
+            },
+            "count": len(aliases),
+            "aliases": aliases,
+        },
+    )
 
     schedule: list[dict[str, object]] = []
     evaluation: dict[str, object] = {
@@ -117,10 +131,12 @@ def main() -> int:
     )
     write_json(args.output / "evaluation.json", evaluation)
 
-    print(f"어휘 {len(entries):,}개, 문제 {len(TARGETS)}개를 {args.output}에 생성했습니다.")
+    print(
+        f"어휘 {len(entries):,}개, 별칭 {len(aliases):,}개, "
+        f"문제 {len(TARGETS)}개를 {args.output}에 생성했습니다."
+    )
     return 0
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
