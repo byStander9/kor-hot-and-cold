@@ -25,6 +25,7 @@ test("조사가 붙은 추측을 판정하고 새로고침 뒤 복원한다", as
 test("공개 게임 메타와 별칭 API가 정답을 노출하지 않는다", async ({ request }) => {
   const gameResponse = await request.get("/api/game?seed=123456789&v=1");
   expect(gameResponse.ok()).toBe(true);
+  expect(gameResponse.headers()["access-control-allow-origin"]).toBe("*");
   const game = (await gameResponse.json()) as Record<string, unknown>;
   expect(game).toMatchObject({ seed: 123456789, version: 1 });
   expect(game.wordCount).toBeGreaterThan(250_000);
@@ -39,6 +40,17 @@ test("공개 게임 메타와 별칭 API가 정답을 노출하지 않는다", a
   const guess = (await guessResponse.json()) as Record<string, unknown>;
   expect(guess.guess).toBe("바다");
   expect(guess).not.toHaveProperty("answer");
+
+  const preflightResponse = await request.fetch("/api/guess", {
+    method: "OPTIONS",
+    headers: {
+      Origin: "http://127.0.0.1:8081",
+      "Access-Control-Request-Method": "POST",
+      "Access-Control-Request-Headers": "content-type",
+    },
+  });
+  expect(preflightResponse.ok()).toBe(true);
+  expect(preflightResponse.headers()["access-control-allow-methods"]).toContain("POST");
 });
 
 test("힌트는 현재 최고 기록보다 높은 순위를 반환한다", async ({ request }) => {
