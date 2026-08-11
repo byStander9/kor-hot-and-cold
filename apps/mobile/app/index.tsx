@@ -36,6 +36,11 @@ import {
   sortGuessesByRank,
 } from '../src/game/domain';
 import { useGame } from '../src/game/use-game';
+import {
+  confirmSeedChangeOnWeb,
+  SEED_CHANGE_CONFIRMATION,
+  updateSeedParams,
+} from '../src/game/seed-navigation';
 import { getShareBaseUrl } from '../src/api/config';
 import { colors, getGutter, spacing } from '../src/theme';
 
@@ -138,10 +143,7 @@ function GameScreen({ seed, gameVersion }: { seed: number; gameVersion: number }
   function replaceSeed(nextSeed: number) {
     const navigate = () => {
       setSeedModalVisible(false);
-      router.replace({
-        pathname: '/',
-        params: { seed: String(nextSeed), v: String(GAME_DATA_VERSION) },
-      });
+      updateSeedParams(router, nextSeed);
     };
 
     if (!hasProgress) {
@@ -149,7 +151,14 @@ function GameScreen({ seed, gameVersion }: { seed: number; gameVersion: number }
       return;
     }
 
-    Alert.alert('다른 게임을 열까요?', '현재 게임을 나가고 다른 시드를 열까요?', [
+    if (Platform.OS === 'web') {
+      if (confirmSeedChangeOnWeb((message) => globalThis.confirm(message))) {
+        navigate();
+      }
+      return;
+    }
+
+    Alert.alert('다른 게임을 열까요?', SEED_CHANGE_CONFIRMATION, [
       { text: '계속하기', style: 'cancel' },
       { text: '다른 시드 열기', onPress: navigate },
     ]);
