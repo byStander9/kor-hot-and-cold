@@ -8,6 +8,7 @@ const appDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), 
 const nextBin = path.join(appDirectory, "node_modules", "next", "dist", "bin", "next");
 const rounds = Number.parseInt(process.env.BENCHMARK_ROUNDS ?? "5", 10);
 const port = Number.parseInt(process.env.BENCHMARK_PORT ?? "3211", 10);
+const settleMs = Number.parseInt(process.env.BENCHMARK_SETTLE_MS ?? "2500", 10);
 const baseUrl = `http://127.0.0.1:${port}`;
 
 if (!Number.isInteger(rounds) || rounds < 1) {
@@ -109,12 +110,14 @@ for (let round = 0; round < rounds; round += 1) {
     await waitForServer();
     const baseSeed = 100_000 + round * 100;
     const gameCold = await request(`/api/game?seed=${baseSeed}&v=1`);
-    const gameWarm = await request(`/api/game?seed=${baseSeed + 1}&v=1`);
+    await new Promise((resolve) => setTimeout(resolve, settleMs));
     const firstGuessCold = await post("/api/guess", {
       guess: "기술",
       seed: baseSeed,
       version: 1,
     });
+    const gameWarm = await request(`/api/game?seed=${baseSeed + 1}&v=1`);
+    await new Promise((resolve) => setTimeout(resolve, settleMs));
     const firstGuessWarm = await post("/api/guess", {
       guess: "사랑",
       seed: baseSeed,

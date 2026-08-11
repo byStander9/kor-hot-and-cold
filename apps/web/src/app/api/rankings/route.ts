@@ -1,5 +1,6 @@
 import { isSupportedGameVersion, parseSeed } from "@/lib/game";
-import { getRankingPage, getSeedGame } from "@/lib/game-data";
+import { getRankingPage } from "@/lib/game-data";
+import { getSeedGame } from "@/lib/game-metadata";
 
 const DEFAULT_LIMIT = 500;
 const MAX_LIMIT = 500;
