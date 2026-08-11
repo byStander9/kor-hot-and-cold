@@ -221,12 +221,26 @@ export function getAdaptiveHint(bestRank: number, seed: number) {
   return word ? makeGuessResult(word, ranking) : null;
 }
 
-export function getFullRanking(seed: number) {
+export function getRankingPage(seed: number, offset: number, limit: number) {
   const ranking = getSeedRanking(seed);
-  return Array.from(ranking.wordIdsByRank, (wordId, index) => ({
-    word: dictionary.words[wordId].word,
-    rank: index + 1,
-  }));
+  const end = Math.min(offset + limit, ranking.wordIdsByRank.length);
+  const items = [];
+
+  for (let index = offset; index < end; index += 1) {
+    const wordId = ranking.wordIdsByRank[index];
+    items.push({
+      word: dictionary.words[wordId].word,
+      rank: index + 1,
+    });
+  }
+
+  return {
+    items,
+    offset,
+    limit,
+    total: ranking.wordIdsByRank.length,
+    nextOffset: end < ranking.wordIdsByRank.length ? end : null,
+  };
 }
 
 export function revealAnswer(seed: number) {

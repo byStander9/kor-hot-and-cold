@@ -30,8 +30,12 @@ type RankingEntry = {
   rank: number;
 };
 
-type GuessResponse = GuessResult & {
-  rankings?: RankingEntry[];
+type RankingPageResponse = {
+  items: RankingEntry[];
+  offset: number;
+  limit: number;
+  total: number;
+  nextOffset: number | null;
 };
 
 type Props = {
@@ -117,7 +121,7 @@ export default function GameBoard({ wordCount, seed, gameVersion }: Props) {
   const [gaveUp, setGaveUp] = useState(false);
   const [storageReady, setStorageReady] = useState(false);
   const [shareMessage, setShareMessage] = useState("");
-  const [allRankings, setAllRankings] = useState<RankingEntry[]>([]);
+  const [rankingEntries, setRankingEntries] = useState<RankingEntry[]>([]);
   const [showAllRankings, setShowAllRankings] = useState(false);
   const [rankingPage, setRankingPage] = useState(0);
 
@@ -171,12 +175,8 @@ export default function GameBoard({ wordCount, seed, gameVersion }: Props) {
   const solved = guesses.some((guess) => guess.solved);
   const finished = solved || gaveUp;
   const rankedGuesses = sortByRank(guesses);
-  const rankingPageCount = Math.ceil(allRankings.length / RANKING_PAGE_SIZE);
+  const rankingPageCount = Math.ceil(wordCount / RANKING_PAGE_SIZE);
   const rankingStart = rankingPage * RANKING_PAGE_SIZE;
-  const visibleRankings = allRankings.slice(
-    rankingStart,
-    rankingStart + RANKING_PAGE_SIZE,
-  );
 
   async function submitGuess(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -197,7 +197,7 @@ export default function GameBoard({ wordCount, seed, gameVersion }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ guess: candidate, seed, version: gameVersion }),
       });
-      const data = (await response.json()) as GuessResponse | { error: string };
+      const data = (await response.json()) as GuessResult | { error: string };
 
       if (!response.ok || "error" in data) {
         setError("error" in data ? data.error : "단어를 확인하지 못했습니다.");
@@ -211,7 +211,6 @@ export default function GameBoard({ wordCount, seed, gameVersion }: Props) {
       }
 
       setGuesses((current) => [{ ...data, source: "guess" }, ...current]);
-      if (data.rankings) setAllRankings(data.rankings);
       setInput("");
     } catch {
       setError("서버에 연결하지 못했습니다. 잠시 뒤 다시 시도해 주세요.");
@@ -266,20 +265,55 @@ export default function GameBoard({ wordCount, seed, gameVersion }: Props) {
       });
       const data = (await response.json()) as {
         answer?: string;
-        rankings?: RankingEntry[];
         error?: string;
       };
 
-      if (!response.ok || !data.answer || !data.rankings) {
+      if (!response.ok || !data.answer) {
         setError(data.error || "정답을 불러오지 못했습니다.");
         return;
       }
 
       setRevealedAnswer(data.answer);
-      setAllRankings(data.rankings);
       setGaveUp(true);
     } catch {
       setError("정답을 불러오지 못했습니다. 잠시 뒤 다시 시도해 주세요.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function loadRankingPage(page: number) {
+    setIsSubmitting(true);
+    setShareMessage("");
+
+    try {
+      const offset = page * RANKING_PAGE_SIZE;
+      const query = new URLSearchParams({
+        seed: String(seed),
+        v: String(gameVersion),
+        offset: String(offset),
+        limit: String(RANKING_PAGE_SIZE),
+      });
+      const response = await fetch(`/api/rankings?${query}`);
+      const data = (await response.json()) as
+        | RankingPageResponse
+        | { error: string };
+
+      if (!response.ok || "error" in data) {
+        setShareMessage(
+          "error" in data ? data.error : "전체 순위를 불러오지 못했습니다.",
+        );
+        return false;
+      }
+
+      setRankingEntries(data.items);
+      setRankingPage(page);
+      return true;
+    } catch {
+      setShareMessage(
+        "전체 순위를 불러오지 못했습니다. 잠시 뒤 다시 시도해 주세요.",
+      );
+      return false;
     } finally {
       setIsSubmitting(false);
     }
@@ -291,42 +325,8 @@ export default function GameBoard({ wordCount, seed, gameVersion }: Props) {
       return;
     }
 
-    if (allRankings.length > 0) {
-      setRankingPage(0);
+    if (rankingEntries.length > 0 || (await loadRankingPage(0))) {
       setShowAllRankings(true);
-      return;
-    }
-
-    setIsSubmitting(true);
-    setShareMessage("");
-
-    try {
-      const response = await fetch("/api/reveal", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ seed, version: gameVersion }),
-      });
-      const data = (await response.json()) as {
-        answer?: string;
-        rankings?: RankingEntry[];
-        error?: string;
-      };
-
-      if (!response.ok || !data.rankings) {
-        setShareMessage(data.error || "전체 순위를 불러오지 못했습니다.");
-        return;
-      }
-
-      if (data.answer) setRevealedAnswer(data.answer);
-      setAllRankings(data.rankings);
-      setRankingPage(0);
-      setShowAllRankings(true);
-    } catch {
-      setShareMessage(
-        "전체 순위를 불러오지 못했습니다. 잠시 뒤 다시 시도해 주세요.",
-      );
-    } finally {
-      setIsSubmitting(false);
     }
   }
 
@@ -547,7 +547,7 @@ export default function GameBoard({ wordCount, seed, gameVersion }: Props) {
           <header>
             <h2 id="full-ranking-title">전체 순위</h2>
             <p>
-              {allRankings.length.toLocaleString("ko-KR")}개 단어 · 1위부터
+              {wordCount.toLocaleString("ko-KR")}개 단어 · 1위부터
               정렬
             </p>
           </header>
@@ -563,7 +563,7 @@ export default function GameBoard({ wordCount, seed, gameVersion }: Props) {
                 </tr>
               </thead>
               <tbody>
-                {visibleRankings.map((entry) => (
+                {rankingEntries.map((entry) => (
                   <tr key={entry.word}>
                     <td className={styles.rank}>
                       {entry.rank.toLocaleString("ko-KR")}위
@@ -577,26 +577,28 @@ export default function GameBoard({ wordCount, seed, gameVersion }: Props) {
           <nav className={styles.rankingPagination} aria-label="전체 순위 페이지">
             <button
               type="button"
-              onClick={() => setRankingPage(0)}
+              onClick={() => void loadRankingPage(0)}
               disabled={rankingPage === 0}
             >
               처음
             </button>
             <button
               type="button"
-              onClick={() => setRankingPage((page) => Math.max(0, page - 1))}
+              onClick={() => void loadRankingPage(Math.max(0, rankingPage - 1))}
               disabled={rankingPage === 0}
             >
               이전
             </button>
             <span aria-live="polite">
               {rankingPage + 1}/{rankingPageCount} 페이지 · {rankingStart + 1}–
-              {Math.min(rankingStart + RANKING_PAGE_SIZE, allRankings.length)}위
+              {Math.min(rankingStart + RANKING_PAGE_SIZE, wordCount)}위
             </span>
             <button
               type="button"
               onClick={() =>
-                setRankingPage((page) => Math.min(rankingPageCount - 1, page + 1))
+                void loadRankingPage(
+                  Math.min(rankingPageCount - 1, rankingPage + 1),
+                )
               }
               disabled={rankingPage >= rankingPageCount - 1}
             >
@@ -604,7 +606,7 @@ export default function GameBoard({ wordCount, seed, gameVersion }: Props) {
             </button>
             <button
               type="button"
-              onClick={() => setRankingPage(rankingPageCount - 1)}
+              onClick={() => void loadRankingPage(rankingPageCount - 1)}
               disabled={rankingPage >= rankingPageCount - 1}
             >
               마지막

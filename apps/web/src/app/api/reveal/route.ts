@@ -1,5 +1,5 @@
 import { isSupportedGameVersion, parseSeed } from "@/lib/game";
-import { getFullRanking, revealAnswer } from "@/lib/game-data";
+import { revealAnswer } from "@/lib/game-data";
 
 type RevealRequest = { seed?: unknown; version?: unknown };
 
@@ -17,5 +17,5 @@ export async function POST(request: Request) {
       { status: 422 },
     );
   }
-  return Response.json({ ...revealAnswer(seed), rankings: getFullRanking(seed) });
+  return Response.json(revealAnswer(seed));
 }

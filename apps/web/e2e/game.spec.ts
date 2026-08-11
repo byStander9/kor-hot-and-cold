@@ -60,7 +60,7 @@ test("힌트는 현재 최고 기록보다 높은 순위를 반환한다", async
   expect(nextHint.rank).toBeLessThan(firstHint.rank);
 });
 
-test("정답 공개와 정답 추측 뒤 전체 순위를 반환한다", async ({ request }) => {
+test("정답 공개 뒤 전체 순위를 페이지 단위로 반환한다", async ({ request }) => {
   const game = (await (await request.get("/api/game?seed=123456789&v=1")).json()) as {
     wordCount: number;
   };
@@ -70,11 +70,38 @@ test("정답 공개와 정답 추측 뒤 전체 순위를 반환한다", async (
   expect(revealResponse.ok()).toBe(true);
   const reveal = (await revealResponse.json()) as {
     answer: string;
-    rankings: Array<{ word: string; rank: number }>;
   };
-  expect(reveal.rankings).toHaveLength(game.wordCount);
-  expect(reveal.rankings[0]).toEqual({ word: reveal.answer, rank: 1 });
-  expect(reveal.rankings.at(-1)?.rank).toBe(game.wordCount);
+
+  const firstPageResponse = await request.get(
+    "/api/rankings?seed=123456789&v=1&offset=0&limit=3",
+  );
+  expect(firstPageResponse.ok()).toBe(true);
+  const firstPage = (await firstPageResponse.json()) as {
+    items: Array<{ word: string; rank: number }>;
+    offset: number;
+    limit: number;
+    total: number;
+    nextOffset: number | null;
+  };
+  expect(firstPage).toMatchObject({
+    offset: 0,
+    limit: 3,
+    total: game.wordCount,
+    nextOffset: 3,
+  });
+  expect(firstPage.items).toHaveLength(3);
+  expect(firstPage.items[0]).toEqual({ word: reveal.answer, rank: 1 });
+
+  const lastPageResponse = await request.get(
+    `/api/rankings?seed=123456789&v=1&offset=${game.wordCount - 2}&limit=2`,
+  );
+  expect(lastPageResponse.ok()).toBe(true);
+  const lastPage = (await lastPageResponse.json()) as {
+    items: Array<{ word: string; rank: number }>;
+    nextOffset: number | null;
+  };
+  expect(lastPage.items.at(-1)?.rank).toBe(game.wordCount);
+  expect(lastPage.nextOffset).toBeNull();
 
   const solvedResponse = await request.post("/api/guess", {
     data: { guess: reveal.answer, seed: 123456789, version: 1 },
@@ -82,10 +109,9 @@ test("정답 공개와 정답 추측 뒤 전체 순위를 반환한다", async (
   expect(solvedResponse.ok()).toBe(true);
   const solved = (await solvedResponse.json()) as {
     solved: boolean;
-    rankings: Array<{ word: string; rank: number }>;
   };
   expect(solved.solved).toBe(true);
-  expect(solved.rankings).toEqual(reveal.rankings);
+  expect(solved).not.toHaveProperty("rankings");
 });
 
 test("같은 시드를 직접 열고 랜덤 새 게임으로 전환한다", async ({ page }) => {

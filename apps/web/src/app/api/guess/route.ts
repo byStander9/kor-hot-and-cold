@@ -5,7 +5,7 @@ import {
   normalizeGuess,
   parseSeed,
 } from "@/lib/game";
-import { getFullRanking, judgeGuess } from "@/lib/game-data";
+import { judgeGuess } from "@/lib/game-data";
 
 type GuessRequest = {
   guess?: unknown;
@@ -58,7 +58,5 @@ export async function POST(request: Request) {
     );
   }
 
-  return Response.json(
-    result.solved ? { ...result, rankings: getFullRanking(seed) } : result,
-  );
+  return Response.json(result);
 }
