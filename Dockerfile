@@ -13,6 +13,8 @@ WORKDIR /app/apps/web
 COPY --from=dependencies /app/apps/web/node_modules ./node_modules
 COPY apps/web ./
 COPY data/demo /app/data/demo
+COPY LICENSE /app/LICENSE
+COPY deploy/container/THIRD_PARTY_NOTICES.md /app/THIRD_PARTY_NOTICES.md
 
 RUN npm run build
 
@@ -31,6 +33,8 @@ COPY --from=builder --chown=node:node /app/apps/web/.next/standalone ./
 COPY --from=builder --chown=node:node /app/apps/web/.next/static ./.next/static
 COPY --from=builder --chown=node:node /app/apps/web/public ./public
 COPY --from=builder --chown=node:node /app/data/demo ./data/demo
+COPY --from=builder --chown=node:node /app/LICENSE ./LICENSE
+COPY --from=builder --chown=node:node /app/THIRD_PARTY_NOTICES.md ./THIRD_PARTY_NOTICES.md
 
 EXPOSE 7860
 
