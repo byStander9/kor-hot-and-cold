@@ -2,7 +2,7 @@
   "expo": {
     "name": "뜨겁고 차갑게",
     "slug": "kor-hot-and-cold",
-    "version": "0.1.0",
+    "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "kor-hot-and-cold",
@@ -12,7 +12,18 @@
       "supportsTablet": false
     },
     "android": {
+      "package": "com.bystander9.korhotandcold",
+      "versionCode": 1,
       "softwareKeyboardLayoutMode": "resize",
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.VIBRATE"
+      ],
+      "blockedPermissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.SYSTEM_ALERT_WINDOW"
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#F5F2EB",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
