@@ -7,15 +7,23 @@ type Props = {
   slow?: boolean;
   error?: string;
   onRetry?: () => void;
+  retryLabel?: string;
+  title?: string;
 };
 
-export function LoadingScreen({ slow = false, error, onRetry }: Props) {
+export function LoadingScreen({
+  slow = false,
+  error,
+  onRetry,
+  retryLabel = '다시 시도',
+  title = '게임 서버에 연결하지 못했어요.',
+}: Props) {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.content}>
         {error ? (
           <View style={styles.errorCard} accessibilityLiveRegion="polite">
-            <Text style={styles.errorTitle}>게임 서버에 연결하지 못했어요.</Text>
+            <Text style={styles.errorTitle}>{title}</Text>
             <Text style={styles.errorBody}>{error}</Text>
             {onRetry ? (
               <Pressable
@@ -25,7 +33,7 @@ export function LoadingScreen({ slow = false, error, onRetry }: Props) {
                   styles.retryButton,
                   pressed && styles.pressed,
                 ]}>
-                <Text style={styles.retryText}>다시 시도</Text>
+                <Text style={styles.retryText}>{retryLabel}</Text>
               </Pressable>
             ) : null}
           </View>

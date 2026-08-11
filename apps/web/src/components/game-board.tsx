@@ -124,6 +124,8 @@ export default function GameBoard({ wordCount, seed, gameVersion }: Props) {
   const [rankingEntries, setRankingEntries] = useState<RankingEntry[]>([]);
   const [showAllRankings, setShowAllRankings] = useState(false);
   const [rankingPage, setRankingPage] = useState(0);
+  const [rankingTotal, setRankingTotal] = useState(wordCount);
+  const [includeSensitiveRankings, setIncludeSensitiveRankings] = useState(false);
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
@@ -175,7 +177,10 @@ export default function GameBoard({ wordCount, seed, gameVersion }: Props) {
   const solved = guesses.some((guess) => guess.solved);
   const finished = solved || gaveUp;
   const rankedGuesses = sortByRank(guesses);
-  const rankingPageCount = Math.ceil(wordCount / RANKING_PAGE_SIZE);
+  const rankingPageCount = Math.max(
+    1,
+    Math.ceil(rankingTotal / RANKING_PAGE_SIZE),
+  );
   const rankingStart = rankingPage * RANKING_PAGE_SIZE;
 
   async function submitGuess(event: FormEvent<HTMLFormElement>) {
@@ -282,7 +287,10 @@ export default function GameBoard({ wordCount, seed, gameVersion }: Props) {
     }
   }
 
-  async function loadRankingPage(page: number) {
+  async function loadRankingPage(
+    page: number,
+    includeSensitive = includeSensitiveRankings,
+  ) {
     setIsSubmitting(true);
     setShareMessage("");
 
@@ -294,6 +302,7 @@ export default function GameBoard({ wordCount, seed, gameVersion }: Props) {
         offset: String(offset),
         limit: String(RANKING_PAGE_SIZE),
       });
+      if (includeSensitive) query.set("includeSensitive", "1");
       const response = await fetch(`/api/rankings?${query}`);
       const data = (await response.json()) as
         | RankingPageResponse
@@ -308,6 +317,7 @@ export default function GameBoard({ wordCount, seed, gameVersion }: Props) {
 
       setRankingEntries(data.items);
       setRankingPage(page);
+      setRankingTotal(data.total);
       return true;
     } catch {
       setShareMessage(
@@ -316,6 +326,22 @@ export default function GameBoard({ wordCount, seed, gameVersion }: Props) {
       return false;
     } finally {
       setIsSubmitting(false);
+    }
+  }
+
+  async function toggleSensitiveRankings() {
+    const nextValue = !includeSensitiveRankings;
+    if (
+      nextValue &&
+      !window.confirm(
+        "민감 단어가 포함된 전체 사전을 볼까요? 성인·비속어·폭력·약물 관련 단어가 표시될 수 있습니다.",
+      )
+    ) {
+      return;
+    }
+
+    if (await loadRankingPage(0, nextValue)) {
+      setIncludeSensitiveRankings(nextValue);
     }
   }
 
@@ -547,9 +573,26 @@ export default function GameBoard({ wordCount, seed, gameVersion }: Props) {
           <header>
             <h2 id="full-ranking-title">전체 순위</h2>
             <p>
-              {wordCount.toLocaleString("ko-KR")}개 단어 · 1위부터
-              정렬
+              {rankingTotal.toLocaleString("ko-KR")}개 표시 · 실제 의미 순위 유지 ·
+              민감 단어 {includeSensitiveRankings ? "포함" : "제외"}
             </p>
+            <div className={styles.rankingSafety}>
+              <p id="ranking-safety-description">
+                전체 사전에는 성인·비속어·폭력·약물 관련 단어가 있을 수 있습니다.
+                이 선택은 현재 화면에만 적용되고 저장하거나 공유하지 않습니다.
+              </p>
+              <button
+                aria-describedby="ranking-safety-description"
+                aria-pressed={includeSensitiveRankings}
+                disabled={isSubmitting}
+                onClick={() => void toggleSensitiveRankings()}
+                type="button"
+              >
+                {includeSensitiveRankings
+                  ? "민감 단어 다시 숨기기"
+                  : "민감 단어 포함해서 보기"}
+              </button>
+            </div>
           </header>
           <div className={styles.fullRankingTable}>
             <table>
@@ -591,7 +634,7 @@ export default function GameBoard({ wordCount, seed, gameVersion }: Props) {
             </button>
             <span aria-live="polite">
               {rankingPage + 1}/{rankingPageCount} 페이지 · {rankingStart + 1}–
-              {Math.min(rankingStart + RANKING_PAGE_SIZE, wordCount)}위
+              {Math.min(rankingStart + RANKING_PAGE_SIZE, rankingTotal)}번째 표시
             </span>
             <button
               type="button"

@@ -12,7 +12,7 @@ describe('시드 게임 이동', () => {
 
     updateSeedParams({ setParams }, 4294967295);
 
-    expect(setParams).toHaveBeenCalledWith({ seed: '4294967295', v: '1' });
+    expect(setParams).toHaveBeenCalledWith({ seed: '4294967295', v: '2' });
   });
 
   it('웹 확인창의 취소와 확인 결과를 그대로 반환한다', () => {

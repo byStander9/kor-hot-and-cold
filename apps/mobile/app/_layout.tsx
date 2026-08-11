@@ -6,6 +6,7 @@ export default function RootLayout() {
     <>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
+        <Stack.Screen name="privacy" options={{ gestureEnabled: true }} />
         <Stack.Screen name="rankings" options={{ gestureEnabled: true }} />
       </Stack>
       <StatusBar style="dark" />

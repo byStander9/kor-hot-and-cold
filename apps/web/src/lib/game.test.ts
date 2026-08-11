@@ -34,9 +34,9 @@ describe("시드 퍼즐 선택", () => {
     expect(parseSeed("4294967296")).toBeNull();
     expect(parseSeed("1.5")).toBeNull();
     expect(parseSeed(undefined)).toBeNull();
-    expect(isSupportedGameVersion(1)).toBe(true);
-    expect(isSupportedGameVersion("1")).toBe(true);
-    expect(isSupportedGameVersion("2")).toBe(false);
+    expect(isSupportedGameVersion(2)).toBe(true);
+    expect(isSupportedGameVersion("2")).toBe(true);
+    expect(isSupportedGameVersion("1")).toBe(false);
   });
 
   it("같은 시드는 항상 같은 정답 ID를 만들고 사전 범위를 벗어나지 않는다", () => {

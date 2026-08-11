@@ -39,6 +39,8 @@
 
 배포 환경에서는 `EXPO_PUBLIC_SHARE_BASE_URL`을 친구가 열 수 있는 공개 HTTPS 웹앱 주소로 바꿉니다. `EXPO_PUBLIC_` 값은 앱 번들에서 읽을 수 있으므로 비밀 키를 넣지 않습니다.
 
+Play 배포 환경에서는 `EXPO_PUBLIC_POLICY_BASE_URL`도 운영 Space 주소로 설정합니다. 앱의 개인정보·데이터 출처 화면이 이 주소의 `/privacy`와 `/licenses`를 엽니다. 미설정 시 공개 저장소 문서를 보여주는 개발용 fallback을 사용합니다.
+
 ## 검사
 
 ```powershell
@@ -61,3 +63,6 @@ npm run export:android
 게임 서버는 공개 한국어 사전, `intfloat/multilingual-e5-small`, Kiwi로 만든 데이터를 사용합니다. 모바일 앱이 원본 데이터를 번들하지 않더라도 Play 배포 전 앱 내 출처 안내와 스토어 설명에 저작자와 라이선스를 고지해야 합니다. 고정 리비전과 재배포 조건은 저장소의 [`docs/DATA_SOURCES.md`](../../docs/DATA_SOURCES.md)와 [`data/sources/data_sources.yml`](../../data/sources/data_sources.yml)을 따릅니다.
 
 실기기 검증 절차는 [`docs/mobile/ANDROID_TEST_CHECKLIST.md`](../../docs/mobile/ANDROID_TEST_CHECKLIST.md)에 있습니다.
+
+Google Play AAB 빌드와 제출 절차는 [`docs/mobile/play-store/RELEASE_GUIDE.md`](../../docs/mobile/play-store/RELEASE_GUIDE.md)에 있습니다.
+제출 직전 확인 항목과 등록용 그래픽은 각각 [`docs/mobile/GOOGLE_PLAY_RELEASE_CHECKLIST.md`](../../docs/mobile/GOOGLE_PLAY_RELEASE_CHECKLIST.md), [`docs/mobile/store-assets/README.md`](../../docs/mobile/store-assets/README.md)에 있습니다.

@@ -81,9 +81,14 @@ export default function IndexScreen() {
   }, [navigationRef, rawSeed, rootNavigationState?.key, seed]);
 
   if (seed === null || version !== GAME_DATA_VERSION) {
+    const legacyVersion = version === 1;
     return (
       <LoadingScreen
-        error="지원하지 않는 시드 또는 게임 데이터 버전이에요."
+        error={
+          legacyVersion
+            ? '이 링크는 안전 정답 풀을 적용하기 전 버전(v1)이어서 이어서 플레이할 수 없어요. 진행 기록은 새 버전으로 옮기지 않습니다.'
+            : '시드 또는 게임 데이터 버전이 올바르지 않아요.'
+        }
         onRetry={() =>
           router.replace({
             pathname: '/',
@@ -93,6 +98,8 @@ export default function IndexScreen() {
             },
           })
         }
+        retryLabel="안전한 새 게임 시작"
+        title={legacyVersion ? '이전 게임 버전이에요.' : '게임을 열 수 없어요.'}
       />
     );
   }
@@ -223,17 +230,30 @@ function GameScreen({ seed, gameVersion }: { seed: number; gameVersion: number }
           <Text style={styles.brandHot}>뜨겁고</Text>{' '}
           <Text style={styles.brandCold}>차갑게</Text>
         </Text>
-        <Pressable
-          accessibilityLabel={game.finished ? '결과 공유' : '현재 시드 공유'}
-          accessibilityRole="button"
-          onPress={() => void shareGame()}
-          style={({ pressed }) => [styles.shareButton, pressed && styles.pressed]}>
-          <MaterialCommunityIcons
-            color={colors.ink}
-            name="share-variant-outline"
-            size={23}
-          />
-        </Pressable>
+        <View style={styles.headerActions}>
+          <Pressable
+            accessibilityLabel="개인정보와 데이터 출처"
+            accessibilityRole="button"
+            onPress={() => router.push('/privacy')}
+            style={({ pressed }) => [styles.headerButton, pressed && styles.pressed]}>
+            <MaterialCommunityIcons
+              color={colors.ink}
+              name="information-outline"
+              size={24}
+            />
+          </Pressable>
+          <Pressable
+            accessibilityLabel={game.finished ? '결과 공유' : '현재 시드 공유'}
+            accessibilityRole="button"
+            onPress={() => void shareGame()}
+            style={({ pressed }) => [styles.headerButton, pressed && styles.pressed]}>
+            <MaterialCommunityIcons
+              color={colors.ink}
+              name="share-variant-outline"
+              size={23}
+            />
+          </Pressable>
+        </View>
       </View>
 
       <Pressable
@@ -453,7 +473,8 @@ const styles = StyleSheet.create({
   brand: { fontSize: 18, fontWeight: '800' },
   brandHot: { color: colors.hot },
   brandCold: { color: colors.cold },
-  shareButton: {
+  headerActions: { flexDirection: 'row' },
+  headerButton: {
     alignItems: 'center',
     height: 48,
     justifyContent: 'center',

@@ -1,6 +1,6 @@
 import type { GuessResponse, Temperature } from '../api/types';
 
-export const GAME_DATA_VERSION = 1;
+export const GAME_DATA_VERSION = 2;
 export const MAX_SEED = 0xffffffff;
 export const MAX_GUESS_LENGTH = 20;
 

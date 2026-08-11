@@ -4,6 +4,7 @@ import argparse
 import json
 from pathlib import Path
 
+from .answer_pool import build_answer_pool
 from .aliases import build_aliases
 from .lexicon import (
     DATASET_REPO_ID,
@@ -98,28 +99,35 @@ def main() -> int:
     vectors = encode_entries(entries, encoder)
     write_embedding_shards(args.output, vectors)
 
+    dictionary = {
+        "version": 1,
+        "sources": [
+            {"repo_id": DATASET_REPO_ID, "revision": DATASET_REVISION},
+            {
+                "repo_id": STANDARD_DATASET_REPO_ID,
+                "revision": STANDARD_DATASET_REVISION,
+            },
+        ],
+        "words": [
+            {
+                "id": entry.word_id,
+                "word": entry.word,
+                "pos": entry.pos,
+                "level": entry.level,
+                "category": entry.category,
+            }
+            for entry in entries
+        ],
+    }
+    write_json(args.output / "dictionary.json", dictionary)
+    policy = json.loads(
+        (repo_root() / "data" / "safety" / "answer-policy.json").read_text(
+            encoding="utf-8"
+        )
+    )
     write_json(
-        args.output / "dictionary.json",
-        {
-            "version": 1,
-            "sources": [
-                {"repo_id": DATASET_REPO_ID, "revision": DATASET_REVISION},
-                {
-                    "repo_id": STANDARD_DATASET_REPO_ID,
-                    "revision": STANDARD_DATASET_REVISION,
-                },
-            ],
-            "words": [
-                {
-                    "id": entry.word_id,
-                    "word": entry.word,
-                    "pos": entry.pos,
-                    "level": entry.level,
-                    "category": entry.category,
-                }
-                for entry in entries
-            ],
-        },
+        args.output / "answer-pool.json",
+        build_answer_pool(dictionary["words"], policy),
     )
     aliases = build_aliases(entries)
     write_json(
