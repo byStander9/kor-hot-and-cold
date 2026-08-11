@@ -3,10 +3,8 @@ import { router } from 'expo-router';
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { getLicensesUrl, getPrivacyPolicyUrl } from '../src/api/config';
 import { colors, spacing } from '../src/theme';
-
-const DATA_SOURCES_URL =
-  'https://github.com/byStander9/kor-hot-and-cold/blob/main/docs/DATA_SOURCES.md';
 
 export default function PrivacyScreen() {
   return (
@@ -57,6 +55,18 @@ export default function PrivacyScreen() {
             운영 호스팅이 확정되면 공개 개인정보처리방침에 사업자, 보유기간, 삭제
             요청 방법을 정확히 명시하고 이 안내를 갱신합니다.
           </Text>
+          <Pressable
+            accessibilityHint="브라우저에서 공개 개인정보처리방침을 엽니다"
+            accessibilityRole="link"
+            onPress={() => void Linking.openURL(getPrivacyPolicyUrl())}
+            style={({ pressed }) => [styles.linkButton, pressed && styles.pressed]}>
+            <Text style={styles.linkText}>전체 개인정보처리방침 보기</Text>
+            <MaterialCommunityIcons
+              color={colors.coldDark}
+              name="open-in-new"
+              size={20}
+            />
+          </Pressable>
         </View>
 
         <View style={styles.section}>
@@ -69,9 +79,9 @@ export default function PrivacyScreen() {
           <Pressable
             accessibilityHint="브라우저에서 GitHub 출처 문서를 엽니다"
             accessibilityRole="link"
-            onPress={() => void Linking.openURL(DATA_SOURCES_URL)}
+            onPress={() => void Linking.openURL(getLicensesUrl())}
             style={({ pressed }) => [styles.linkButton, pressed && styles.pressed]}>
-            <Text style={styles.linkText}>데이터·모델 출처 보기</Text>
+            <Text style={styles.linkText}>라이선스·데이터 출처 보기</Text>
             <MaterialCommunityIcons
               color={colors.coldDark}
               name="open-in-new"
