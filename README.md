@@ -288,9 +288,12 @@ docs/           전체 계획, 출처 정책, 모델 비교 결과
 - [Android 실기기 테스트 체크리스트](docs/mobile/ANDROID_TEST_CHECKLIST.md)
 - [Google Play 출시 가이드](docs/mobile/play-store/RELEASE_GUIDE.md)
 - [Google Play 출시 요구사항 체크리스트](docs/mobile/GOOGLE_PLAY_RELEASE_CHECKLIST.md)
+- [Google Play 한국어 스토어 등록정보 초안](docs/mobile/play-store/STORE_LISTING_KO.md)
+- [Google Play Data safety 답변 초안](docs/mobile/play-store/DATA_SAFETY_DRAFT_KO.md)
 - [개인정보처리방침 초안](docs/mobile/play-store/PRIVACY_POLICY_DRAFT_KO.md)
 - [Play 스토어 그래픽 자산](docs/mobile/store-assets/README.md)
 - [Hugging Face 운영 배포 안내](deploy/huggingface/README.md)
+- [GHCR 운영 이미지 배포 안내](docs/DEPLOYMENT_GHCR.md)
 
 ## 참고한 프로젝트와 자료
 

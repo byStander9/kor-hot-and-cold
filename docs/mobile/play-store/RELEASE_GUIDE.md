@@ -29,6 +29,7 @@ EXPO_PUBLIC_POLICY_BASE_URL=https://<운영-space>
 ```
 
 `EXPO_PUBLIC_POLICY_BASE_URL`에는 `/privacy`와 `/licenses` 페이지가 있어야 합니다. EAS 프로젝트 생성 후 `production`과 `preview` 환경에 값을 등록합니다.
+운영 API 컨테이너를 GHCR에 게시하고 호스팅에 연결하는 절차는 [GHCR 운영 이미지 배포 안내](../../DEPLOYMENT_GHCR.md)를 따릅니다.
 
 ```powershell
 npx eas-cli env:create --environment production --visibility plaintext --name EXPO_PUBLIC_API_BASE_URL --value https://<운영-api>
@@ -100,6 +101,8 @@ apps/mobile/android/app/build/outputs/bundle/release/app-release.aab
 6. [Play 스토어 그래픽 자산](../store-assets/README.md)의 아이콘·feature graphic과 최종 출시 빌드 스크린샷을 등록합니다.
 7. 실기기 내부 테스트를 통과한 뒤 비공개 테스트와 production 순서로 진행합니다.
 
+Play Console에 입력할 문안은 [한국어 스토어 등록정보 초안](STORE_LISTING_KO.md)에서 복사한 뒤 실제 출시 빌드와 일치하는지 다시 확인합니다.
+
 EAS Submit 자동화에는 Google Service Account가 필요합니다. 자격증명이 없는 첫 출시는 Play Console에서 수동으로 진행하는 편이 단순합니다.
 
 - [Expo Android 첫 수동 제출](https://docs.expo.dev/submit/android-manual/)
@@ -121,7 +124,7 @@ EAS Submit 자동화에는 Google Service Account가 필요합니다. 자격증�
 - IP로 위치를 추론하거나 요청을 분석 용도로 재사용한다면 해당 데이터 유형과 목적을 신고해야 합니다.
 - 전송 중 암호화 항목은 모든 운영 URL이 HTTPS일 때만 선택합니다.
 
-[Google Play Data Safety 안내](https://support.google.com/googleplay/android-developer/answer/10787469)를 기준으로 실제 서버 동작과 일치시킵니다. 정책 문안은 [개인정보처리방침 초안](PRIVACY_POLICY_DRAFT_KO.md)을 사용하고, [Google Play 출시 요구사항 체크리스트](../GOOGLE_PLAY_RELEASE_CHECKLIST.md)와 함께 다시 확인합니다. 공개 연락처를 정하기 전에는 [개인정보 연락처 준비 메모](../PRIVACY_RELEASE_NOTE.md)도 확인합니다.
+[Google Play Data Safety 안내](https://support.google.com/googleplay/android-developer/answer/10787469)를 기준으로 실제 서버 동작과 일치시킵니다. Console 응답은 [Data safety 답변 초안](DATA_SAFETY_DRAFT_KO.md), 정책 문안은 [개인정보처리방침 초안](PRIVACY_POLICY_DRAFT_KO.md)을 사용하고, [Google Play 출시 요구사항 체크리스트](../GOOGLE_PLAY_RELEASE_CHECKLIST.md)와 함께 다시 확인합니다. 공개 연락처를 정하기 전에는 [개인정보 연락처 준비 메모](../PRIVACY_RELEASE_NOTE.md)도 확인합니다.
 
 ## 7. 업데이트 규칙
 
