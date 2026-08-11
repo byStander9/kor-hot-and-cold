@@ -231,15 +231,39 @@ function GameScreen({ seed, gameVersion }: { seed: number; gameVersion: number }
           <Pressable
             accessibilityRole="button"
             onPress={() => replaceSeed(createRandomSeed())}
-            style={({ pressed }) => [styles.primaryButton, pressed && styles.pressed]}>
-            <MaterialCommunityIcons color={colors.white} name="shuffle-variant" size={22} />
-            <Text style={styles.primaryButtonText}>랜덤 새 게임</Text>
+            style={({ pressed }) => [
+              styles.primaryButton,
+              game.solved && styles.solvedPrimaryButton,
+              pressed && styles.pressed,
+            ]}>
+            <MaterialCommunityIcons
+              color={game.solved ? colors.ink : colors.white}
+              name="shuffle-variant"
+              size={22}
+            />
+            <Text
+              style={[
+                styles.primaryButtonText,
+                game.solved && styles.solvedPrimaryButtonText,
+              ]}>
+              랜덤 새 게임
+            </Text>
           </Pressable>
           <Pressable
             accessibilityRole="button"
             onPress={() => void shareGame()}
-            style={({ pressed }) => [styles.secondaryButton, pressed && styles.pressed]}>
-            <Text style={styles.secondaryButtonText}>결과 공유</Text>
+            style={({ pressed }) => [
+              styles.secondaryButton,
+              game.solved && styles.solvedSecondaryButton,
+              pressed && styles.pressed,
+            ]}>
+            <Text
+              style={[
+                styles.secondaryButtonText,
+                game.solved && styles.solvedSecondaryButtonText,
+              ]}>
+              결과 공유
+            </Text>
           </Pressable>
           <Pressable
             accessibilityRole="button"
@@ -254,8 +278,18 @@ function GameScreen({ seed, gameVersion }: { seed: number; gameVersion: number }
                 },
               })
             }
-            style={({ pressed }) => [styles.secondaryButton, pressed && styles.pressed]}>
-            <Text style={styles.secondaryButtonText}>전체 순위 보기</Text>
+            style={({ pressed }) => [
+              styles.secondaryButton,
+              game.solved && styles.solvedSecondaryButton,
+              pressed && styles.pressed,
+            ]}>
+            <Text
+              style={[
+                styles.secondaryButtonText,
+                game.solved && styles.solvedSecondaryButtonText,
+              ]}>
+              전체 순위 보기
+            </Text>
           </Pressable>
         </View>
       ) : game.guesses.length === 0 ? (
@@ -309,7 +343,9 @@ function GameScreen({ seed, gameVersion }: { seed: number; gameVersion: number }
   );
 
   return (
-    <SafeAreaView edges={['top']} style={styles.safeArea}>
+    <SafeAreaView
+      edges={game.finished ? ['top', 'bottom'] : ['top']}
+      style={styles.safeArea}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.screen}>
@@ -445,7 +481,7 @@ const styles = StyleSheet.create({
   bestTemperature: { color: colors.inkSoft, fontSize: 14, fontWeight: '600' },
   bestMeta: { color: colors.muted, fontSize: 14 },
   resultCard: { borderRadius: 20, padding: spacing.xl },
-  solvedCard: { backgroundColor: colors.hot },
+  solvedCard: { backgroundColor: colors.hotDark },
   gaveUpCard: {
     backgroundColor: colors.surface,
     borderColor: colors.muted,
@@ -468,6 +504,8 @@ const styles = StyleSheet.create({
     minHeight: 52,
   },
   primaryButtonText: { color: colors.white, fontSize: 16, fontWeight: '600' },
+  solvedPrimaryButton: { backgroundColor: colors.surface },
+  solvedPrimaryButtonText: { color: colors.ink },
   secondaryButton: {
     alignItems: 'center',
     borderColor: colors.line,
@@ -478,6 +516,8 @@ const styles = StyleSheet.create({
     minHeight: 52,
   },
   secondaryButtonText: { color: colors.ink, fontSize: 16, fontWeight: '600' },
+  solvedSecondaryButton: { borderColor: colors.white },
+  solvedSecondaryButtonText: { color: colors.white },
   listTitleRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing.sm },
   listTitle: { color: colors.ink, fontSize: 20, fontWeight: '800' },
   listCount: { color: colors.muted, fontSize: 14 },
