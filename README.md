@@ -255,7 +255,6 @@ cd ../mobile
 npm test
 npm run typecheck
 npm run lint
-npm test
 npm run doctor
 npm run export:android
 ```
