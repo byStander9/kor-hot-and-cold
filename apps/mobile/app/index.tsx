@@ -1,13 +1,16 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  AccessibilityInfo,
   Alert,
   FlatList,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  Share,
   StyleSheet,
   Text,
   useWindowDimensions,
@@ -20,6 +23,7 @@ import { GuessRow } from '../src/components/guess-row';
 import { LoadingScreen } from '../src/components/loading-screen';
 import { SeedModal } from '../src/components/seed-modal';
 import {
+  createShareText,
   createRandomSeed,
   GAME_DATA_VERSION,
   getTemperature,
@@ -27,6 +31,7 @@ import {
   sortGuessesByRank,
 } from '../src/game/domain';
 import { useGame } from '../src/game/use-game';
+import { getShareBaseUrl } from '../src/api/config';
 import { colors, getGutter, spacing } from '../src/theme';
 
 function getSingleParam(value: string | string[] | undefined) {
@@ -75,6 +80,8 @@ function GameScreen({ seed, gameVersion }: { seed: number; gameVersion: number }
   const [input, setInput] = useState('');
   const [keyboardOpen, setKeyboardOpen] = useState(false);
   const [seedModalVisible, setSeedModalVisible] = useState(false);
+  const [toast, setToast] = useState('');
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const game = useGame(seed, gameVersion);
 
   useEffect(() => {
@@ -85,6 +92,13 @@ function GameScreen({ seed, gameVersion }: { seed: number; gameVersion: number }
       hide.remove();
     };
   }, []);
+
+  useEffect(
+    () => () => {
+      if (toastTimer.current) clearTimeout(toastTimer.current);
+    },
+    [],
+  );
 
   const sortedGuesses = useMemo(
     () => sortGuessesByRank(game.guesses),
@@ -126,9 +140,44 @@ function GameScreen({ seed, gameVersion }: { seed: number; gameVersion: number }
       {
         text: '정답 보기',
         style: 'destructive',
-        onPress: () => void game.runReveal(),
+        onPress: () => {
+          void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(
+            () => undefined,
+          );
+          void game.runReveal();
+        },
       },
     ]);
+  }
+
+  function showToast(message: string) {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast(message);
+    AccessibilityInfo.announceForAccessibility(message);
+    toastTimer.current = setTimeout(() => setToast(''), 2_000);
+  }
+
+  async function shareGame() {
+    const url = `${getShareBaseUrl()}/?seed=${seed}&v=${gameVersion}`;
+    const message = game.finished
+      ? createShareText({
+          seed,
+          solved: game.solved,
+          guesses: game.guesses,
+          url,
+        })
+      : `뜨겁고 차갑게 · 시드 #${seed}\n같은 문제에 도전해 보세요.\n${url}`;
+
+    try {
+      const result = await Share.share({
+        message,
+        title: '뜨겁고 차갑게',
+      });
+      if (result.action === Share.dismissedAction) return;
+      showToast('공유할 내용을 준비했어요.');
+    } catch {
+      showToast('공유하지 못했어요. 다시 시도해 주세요.');
+    }
   }
 
   function retryInlineAction() {
@@ -144,6 +193,17 @@ function GameScreen({ seed, gameVersion }: { seed: number; gameVersion: number }
           <Text style={styles.brandHot}>뜨겁고</Text>{' '}
           <Text style={styles.brandCold}>차갑게</Text>
         </Text>
+        <Pressable
+          accessibilityLabel={game.finished ? '결과 공유' : '현재 시드 공유'}
+          accessibilityRole="button"
+          onPress={() => void shareGame()}
+          style={({ pressed }) => [styles.shareButton, pressed && styles.pressed]}>
+          <MaterialCommunityIcons
+            color={colors.ink}
+            name="share-variant-outline"
+            size={23}
+          />
+        </Pressable>
       </View>
 
       <Pressable
@@ -174,6 +234,12 @@ function GameScreen({ seed, gameVersion }: { seed: number; gameVersion: number }
             style={({ pressed }) => [styles.primaryButton, pressed && styles.pressed]}>
             <MaterialCommunityIcons color={colors.white} name="shuffle-variant" size={22} />
             <Text style={styles.primaryButtonText}>랜덤 새 게임</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => void shareGame()}
+            style={({ pressed }) => [styles.secondaryButton, pressed && styles.pressed]}>
+            <Text style={styles.secondaryButtonText}>결과 공유</Text>
           </Pressable>
           <Pressable
             accessibilityRole="button"
@@ -297,6 +363,14 @@ function GameScreen({ seed, gameVersion }: { seed: number; gameVersion: number }
         onRandomSeed={() => replaceSeed(createRandomSeed())}
         visible={seedModalVisible}
       />
+      {toast ? (
+        <View
+          accessibilityLiveRegion="polite"
+          pointerEvents="none"
+          style={[styles.toast, { bottom: game.finished ? spacing.xxl : 132 }]}>
+          <Text style={styles.toastText}>{toast}</Text>
+        </View>
+      ) : null}
     </SafeAreaView>
   );
 }
@@ -304,10 +378,21 @@ function GameScreen({ seed, gameVersion }: { seed: number; gameVersion: number }
 const styles = StyleSheet.create({
   safeArea: { backgroundColor: colors.paper, flex: 1 },
   screen: { flex: 1 },
-  header: { height: 52, justifyContent: 'center' },
+  header: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    height: 52,
+    justifyContent: 'space-between',
+  },
   brand: { fontSize: 18, fontWeight: '800' },
   brandHot: { color: colors.hot },
   brandCold: { color: colors.cold },
+  shareButton: {
+    alignItems: 'center',
+    height: 48,
+    justifyContent: 'center',
+    width: 48,
+  },
   seedButton: {
     alignItems: 'center',
     alignSelf: 'flex-start',
@@ -416,5 +501,15 @@ const styles = StyleSheet.create({
     width: 48,
   },
   emptyText: { color: colors.muted, fontSize: 14 },
+  toast: {
+    alignSelf: 'center',
+    backgroundColor: colors.ink,
+    borderRadius: 999,
+    maxWidth: '90%',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    position: 'absolute',
+  },
+  toastText: { color: colors.white, fontSize: 14, fontWeight: '600' },
   pressed: { opacity: 0.72 },
 });

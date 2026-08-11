@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import * as Haptics from 'expo-haptics';
 
 import {
   ApiClientError,
@@ -32,6 +33,10 @@ function getErrorMessage(error: unknown, fallback: string) {
     return '서버에 연결하지 못했어요.';
   }
   return error.message || fallback;
+}
+
+function haptic(promise: Promise<void>) {
+  void promise.catch(() => undefined);
 }
 
 export function useGame(seed: number, gameVersion: number) {
@@ -112,6 +117,9 @@ export function useGame(seed: number, gameVersion: number) {
 
       const validationError = getGuessError(candidate);
       if (validationError) {
+        haptic(
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error),
+        );
         setInlineError({
           message:
             validationError === 'TOO_LONG'
@@ -124,6 +132,9 @@ export function useGame(seed: number, gameVersion: number) {
 
       const normalized = normalizeGuess(candidate);
       if (guesses.some((guess) => guess.guess === normalized)) {
+        haptic(
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error),
+        );
         setInlineError({ message: '이미 확인한 단어예요.', retryable: false });
         return false;
       }
@@ -138,12 +149,24 @@ export function useGame(seed: number, gameVersion: number) {
           setInlineError({ message: '이미 확인한 단어예요.', retryable: false });
           return false;
         }
+        if (result.solved) {
+          haptic(
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success),
+          );
+        } else if (result.rank < bestRank) {
+          haptic(Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light));
+        } else {
+          haptic(Haptics.selectionAsync());
+        }
         setGuesses((current) => [
           ...current,
           { ...result, source: 'guess' },
         ]);
         return true;
       } catch (error) {
+        haptic(
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error),
+        );
         const retryable =
           error instanceof ApiClientError &&
           (error.kind === 'network' || error.kind === 'timeout');
@@ -156,7 +179,7 @@ export function useGame(seed: number, gameVersion: number) {
       } finally {
         setAction('idle');
       }
-    }, [action, finished, game, gameVersion, guesses, seed],
+    }, [action, bestRank, finished, game, gameVersion, guesses, seed],
   );
 
   const runHint = useCallback(async () => {
@@ -167,6 +190,7 @@ export function useGame(seed: number, gameVersion: number) {
       fetchHint({ bestRank, seed, version: gameVersion });
     try {
       const result = await execute();
+      haptic(Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light));
       setHintCount((count) => count + 1);
       setGuesses((current) =>
         current.some((guess) => guess.guess === result.guess)
@@ -175,6 +199,9 @@ export function useGame(seed: number, gameVersion: number) {
       );
       return true;
     } catch (error) {
+      haptic(
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error),
+      );
       const retryable =
         error instanceof ApiClientError &&
         (error.kind === 'network' || error.kind === 'timeout');
@@ -200,6 +227,9 @@ export function useGame(seed: number, gameVersion: number) {
       setGaveUp(true);
       return true;
     } catch (error) {
+      haptic(
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error),
+      );
       const retryable =
         error instanceof ApiClientError &&
         (error.kind === 'network' || error.kind === 'timeout');

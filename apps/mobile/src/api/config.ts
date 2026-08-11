@@ -1,4 +1,8 @@
 const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL?.trim().replace(/\/+$/, '');
+const shareBaseUrl = process.env.EXPO_PUBLIC_SHARE_BASE_URL?.trim().replace(
+  /\/+$/,
+  '',
+);
 
 export function getApiBaseUrl() {
   if (!apiBaseUrl) {
@@ -6,4 +10,8 @@ export function getApiBaseUrl() {
   }
 
   return apiBaseUrl;
+}
+
+export function getShareBaseUrl() {
+  return shareBaseUrl || getApiBaseUrl();
 }
