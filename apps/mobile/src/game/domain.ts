@@ -39,6 +39,10 @@ export function createRandomSeed() {
   return Math.floor(Math.random() * (MAX_SEED + 1));
 }
 
+export function resolveRouteSeed(input: unknown, generatedSeed: number | null) {
+  return input === undefined ? generatedSeed : parseSeed(input);
+}
+
 export function getTemperature(rank: number): Temperature {
   if (rank === 1) return { label: '정답', level: 4 };
   if (rank <= 10) return { label: '매우 뜨거움', level: 4 };

@@ -7,6 +7,7 @@ import {
   getTemperature,
   normalizeGuess,
   parseSeed,
+  resolveRouteSeed,
   sortGuessesByRank,
   type GameGuess,
 } from './domain';
@@ -44,6 +45,12 @@ describe('시드와 순위', () => {
     expect(parseSeed('4294967295')).toBe(4294967295);
     expect(parseSeed('4294967296')).toBeNull();
     expect(parseSeed('1.5')).toBeNull();
+  });
+
+  it('시드 없는 첫 실행은 생성한 시드를 사용하고 딥링크 시드는 유지한다', () => {
+    expect(resolveRouteSeed(undefined, 123)).toBe(123);
+    expect(resolveRouteSeed('456', 123)).toBe(456);
+    expect(resolveRouteSeed('invalid', 123)).toBeNull();
   });
 
   it('원본을 바꾸지 않고 순위 오름차순으로 정렬한다', () => {

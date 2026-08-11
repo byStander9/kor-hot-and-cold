@@ -1,6 +1,11 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import * as Haptics from 'expo-haptics';
-import { router, useLocalSearchParams } from 'expo-router';
+import {
+  router,
+  useLocalSearchParams,
+  useNavigationContainerRef,
+  useRootNavigationState,
+} from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   AccessibilityInfo,
@@ -27,7 +32,7 @@ import {
   createRandomSeed,
   GAME_DATA_VERSION,
   getTemperature,
-  parseSeed,
+  resolveRouteSeed,
   sortGuessesByRank,
 } from '../src/game/domain';
 import { useGame } from '../src/game/use-game';
@@ -40,20 +45,36 @@ function getSingleParam(value: string | string[] | undefined) {
 
 export default function IndexScreen() {
   const params = useLocalSearchParams<{ seed?: string | string[]; v?: string | string[] }>();
+  const navigationRef = useNavigationContainerRef();
+  const rootNavigationState = useRootNavigationState();
   const rawSeed = getSingleParam(params.seed);
   const rawVersion = getSingleParam(params.v);
-  const seed = parseSeed(rawSeed);
+  const generatedSeedRef = useRef<number | null>(null);
+  if (rawSeed === undefined && generatedSeedRef.current === null) {
+    generatedSeedRef.current = createRandomSeed();
+  }
+  const seed = resolveRouteSeed(rawSeed, generatedSeedRef.current);
   const version = rawVersion === undefined ? GAME_DATA_VERSION : Number(rawVersion);
 
   useEffect(() => {
-    if (rawSeed !== undefined) return;
-    router.replace({
-      pathname: '/',
-      params: { seed: String(createRandomSeed()), v: String(GAME_DATA_VERSION) },
-    });
-  }, [rawSeed]);
+    if (rawSeed !== undefined || seed === null) return;
 
-  if (rawSeed === undefined) return <LoadingScreen />;
+    let animationFrame: number;
+    const replaceWhenReady = () => {
+      if (!rootNavigationState?.key || !navigationRef.isReady()) {
+        animationFrame = requestAnimationFrame(replaceWhenReady);
+        return;
+      }
+      router.replace({
+        pathname: '/',
+        params: { seed: String(seed), v: String(GAME_DATA_VERSION) },
+      });
+    };
+
+    animationFrame = requestAnimationFrame(replaceWhenReady);
+    return () => cancelAnimationFrame(animationFrame);
+  }, [navigationRef, rawSeed, rootNavigationState?.key, seed]);
+
   if (seed === null || version !== GAME_DATA_VERSION) {
     return (
       <LoadingScreen
