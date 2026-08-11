@@ -4,7 +4,7 @@
 
 비밀 단어와 의미적으로 가까운 한국어 단어를 추측하며 정답을 찾아가는 게임입니다. 각 추측은 원시 유사도 대신 **전체 후보 어휘 중 의미 근접 순위**로 표시합니다. 숫자 시드를 공유하면 누구나 같은 문제로 경쟁할 수 있고, 랜덤 시드로 새 게임을 계속 만들 수 있습니다.
 
-> 현재 상태: 공개 데이터 기반 웹 MVP가 완성되었습니다. 280,804개 표제어와 577,999개 활용형 별칭을 제공하며, 32비트 시드 약 42억 개가 전체 표제어 중 정답을 결정합니다. 정식 공개 전 사람 플레이 테스트는 남아 있습니다.
+> 현재 상태: 공개 데이터 기반 웹 MVP와 Android 우선 Expo 모바일 MVP가 완성되었습니다. 280,804개 표제어와 577,999개 활용형 별칭을 제공하며, 32비트 시드 약 42억 개가 전체 표제어 중 정답을 결정합니다. Play 스토어 배포 전 Android 실기기 플레이 테스트와 운영 API 배포는 남아 있습니다.
 
 ## 왜 만드는가
 
@@ -38,11 +38,12 @@ Reddit의 Hot and Cold를 플레이한 뒤 같은 탐색의 재미를 한국어�
 ## 기술 구성
 
 - 웹: Next.js, React, TypeScript
+- 모바일: Expo SDK 54, React Native, Expo Router, TypeScript
 - 데이터 파이프라인: Python
 - 공개 모델·데이터 탐색: Hugging Face Hub
 - 형태소 처리: Kiwi/kiwipiepy 오프라인 별칭 생성
 - 유사도 모델: `intfloat/multilingual-e5-small`
-- 테스트: Vitest, Playwright, pytest, GitHub Actions
+- 테스트: Vitest, Playwright, Expo Doctor, pytest, GitHub Actions
 
 ## 공개 데이터 활용
 
@@ -70,6 +71,8 @@ Reddit의 Hot and Cold를 플레이한 뒤 같은 탐색의 재미를 한국어�
 - [x] 단계별 힌트와 정답 포기
 - [x] 날짜별 기록과 정답 비노출 공유
 - [x] 모바일·접근성·회귀 테스트
+- [x] Expo 모바일 게임·시드 공유·전체 순위 화면
+- [ ] Android 실기기 한국어 IME와 네트워크 플레이 테스트
 - [ ] 비공개 플레이 테스트와 정답 검수
 
 ## 개발 기록
@@ -203,7 +206,38 @@ npm run dev
 
 브라우저에서 `http://localhost:3000`을 엽니다. 시드가 없는 주소는 자동으로 랜덤 시드를 만들며, 예를 들어 `http://localhost:3000/?seed=123&v=1`은 언제 열어도 같은 문제입니다.
 
-### 3. 전체 검사
+### 3. Expo Go로 모바일 앱 실행
+
+PC와 스마트폰을 같은 Wi-Fi에 연결합니다. 먼저 `ipconfig`에서 Wi-Fi 어댑터의 IPv4 주소를 확인합니다. 예를 들어 PC 주소가 `192.168.0.10`이면 API 서버를 외부 기기에서 접근할 수 있게 실행합니다.
+
+```powershell
+cd apps/web
+npm install
+npm run dev -- --hostname 0.0.0.0
+```
+
+새 PowerShell 창에서 모바일 환경 파일을 만들고 주소를 실제 PC IPv4로 바꿉니다.
+
+```powershell
+cd apps/mobile
+Copy-Item .env.example .env
+```
+
+```dotenv
+EXPO_PUBLIC_API_BASE_URL=http://192.168.0.10:3000
+EXPO_PUBLIC_SHARE_BASE_URL=http://192.168.0.10:3000
+```
+
+이후 Expo 개발 서버를 시작하고 Android의 Expo Go로 QR 코드를 읽습니다.
+
+```powershell
+npm install
+npm start -- --lan
+```
+
+스마트폰에서 `localhost`는 PC가 아니라 스마트폰 자신을 뜻하므로 사용할 수 없습니다. Windows 방화벽 알림이 뜨면 신뢰하는 개인 네트워크에서만 Node.js 접근을 허용합니다. 자세한 확인 항목은 [`docs/mobile/ANDROID_TEST_CHECKLIST.md`](docs/mobile/ANDROID_TEST_CHECKLIST.md)에 있습니다.
+
+### 4. 전체 검사
 
 ```powershell
 cd pipeline
@@ -216,12 +250,21 @@ npm run lint
 npm run build
 npx playwright install chromium
 npm run test:e2e
+
+cd ../mobile
+npm test
+npm run typecheck
+npm run lint
+npm test
+npm run doctor
+npm run export:android
 ```
 
 ## 저장소 구조
 
 ```text
 apps/web/       Next.js 화면, 서버 API, Vitest·Playwright 테스트
+apps/mobile/    Expo/React Native Android 앱, 시드별 로컬 진행 저장
 pipeline/       Hugging Face 수집, 어휘 정제, Kiwi 별칭, 임베딩·순위 생성
 data/demo/      어휘 메타데이터, 별칭, 분할된 전체 임베딩
 data/sources/   외부 자료 URL, 고정 리비전, 라이선스, 재배포 판단
@@ -234,12 +277,16 @@ docs/           전체 계획, 출처 정책, 모델 비교 결과
 - 뜻풀이 임베딩은 다의어의 여러 의미를 하나로 합치므로 일부 순위가 직관적이지 않을 수 있습니다.
 - 표준국어대사전 기반 전문어까지 포함하지만 최신 신조어와 일부 고유명사는 인식하지 못할 수 있습니다.
 - 연속 플레이 기록, 서버 분석, 신고 기능은 개인정보 수집을 피하기 위해 MVP에서 제외했습니다.
+- 모바일 앱은 사전과 임베딩을 기기에 넣지 않으므로 게임 플레이에 API 서버 연결이 필요합니다.
+- 현재 공유 URL은 `EXPO_PUBLIC_SHARE_BASE_URL` 설정을 사용합니다. 다른 사람이 열 수 있게 하려면 Play 배포 전에 공개 HTTPS 웹 주소를 지정해야 합니다.
 
 ## 문서
 
 - [전체 개발 계획](docs/PROJECT_PLAN.md)
 - [데이터·모델 출처 관리](docs/DATA_SOURCES.md)
 - [임베딩 모델 1차 비교](docs/MODEL_EVALUATION.md)
+- [모바일 디자인 명세](docs/mobile/DESIGN_SPEC.md)
+- [Android 실기기 테스트 체크리스트](docs/mobile/ANDROID_TEST_CHECKLIST.md)
 
 ## 참고한 프로젝트와 자료
 
@@ -253,4 +300,4 @@ docs/           전체 계획, 출처 정책, 모델 비교 결과
 
 ## 라이선스
 
-프로젝트의 자체 작성 코드는 [MIT License](LICENSE)로 공개합니다. 외부 데이터와 모델은 각각의 원 라이선스를 따르며, 이 저장소의 MIT License가 외부 자료에 적용되는 것은 아닙니다.
+프로젝트의 자체 작성 코드는 [MIT License](LICENSE)로 공개합니다. 외부 데이터와 모델은 각각의 원 라이선스를 따르며, 이 저장소의 MIT License가 외부 자료에 적용되는 것은 아닙니다. 모바일 앱에는 사전·별칭·임베딩 원본을 번들하지 않고 서버 API 결과만 전송합니다. Play 배포 전에는 앱 내 출처 안내와 스토어 설명에도 데이터와 모델의 저작자·라이선스를 고지해야 합니다.
