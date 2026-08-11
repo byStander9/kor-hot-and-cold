@@ -223,17 +223,30 @@ function GameScreen({ seed, gameVersion }: { seed: number; gameVersion: number }
           <Text style={styles.brandHot}>뜨겁고</Text>{' '}
           <Text style={styles.brandCold}>차갑게</Text>
         </Text>
-        <Pressable
-          accessibilityLabel={game.finished ? '결과 공유' : '현재 시드 공유'}
-          accessibilityRole="button"
-          onPress={() => void shareGame()}
-          style={({ pressed }) => [styles.shareButton, pressed && styles.pressed]}>
-          <MaterialCommunityIcons
-            color={colors.ink}
-            name="share-variant-outline"
-            size={23}
-          />
-        </Pressable>
+        <View style={styles.headerActions}>
+          <Pressable
+            accessibilityLabel="개인정보와 데이터 출처"
+            accessibilityRole="button"
+            onPress={() => router.push('/privacy')}
+            style={({ pressed }) => [styles.headerButton, pressed && styles.pressed]}>
+            <MaterialCommunityIcons
+              color={colors.ink}
+              name="information-outline"
+              size={24}
+            />
+          </Pressable>
+          <Pressable
+            accessibilityLabel={game.finished ? '결과 공유' : '현재 시드 공유'}
+            accessibilityRole="button"
+            onPress={() => void shareGame()}
+            style={({ pressed }) => [styles.headerButton, pressed && styles.pressed]}>
+            <MaterialCommunityIcons
+              color={colors.ink}
+              name="share-variant-outline"
+              size={23}
+            />
+          </Pressable>
+        </View>
       </View>
 
       <Pressable
@@ -453,7 +466,8 @@ const styles = StyleSheet.create({
   brand: { fontSize: 18, fontWeight: '800' },
   brandHot: { color: colors.hot },
   brandCold: { color: colors.cold },
-  shareButton: {
+  headerActions: { flexDirection: 'row' },
+  headerButton: {
     alignItems: 'center',
     height: 48,
     justifyContent: 'center',
