@@ -20,6 +20,7 @@ dev = [
 [project.scripts]
 verify-sources = "kor_hot_and_cold_pipeline.sources:main"
 build-demo-data = "kor_hot_and_cold_pipeline.build_demo:main"
+build-answer-pool = "kor_hot_and_cold_pipeline.answer_pool:main"
 
 [build-system]
 requires = ["hatchling"]
