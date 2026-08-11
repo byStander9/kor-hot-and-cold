@@ -1,7 +1,7 @@
 # Google Play 출시 체크리스트 초안
 
-확인일: 2026년 8월 11일  
-범위: Android 휴대전화용 신규 게임 앱, 한국 출시 우선  
+확인일: 2026년 8월 11일
+범위: Android 휴대전화용 신규 게임 앱, 한국 출시 우선
 출처 원칙: Google Play Console, Android Developers, Expo의 공식 문서만 사용
 
 > Play 정책과 Console 질문은 자주 바뀝니다. 특히 목표 API와 본인확인·테스트 기준은 실제 제출 직전에 아래 공식 링크와 Play Console의 경고를 다시 확인해야 합니다. 이 문서는 법률 자문이 아닙니다.
