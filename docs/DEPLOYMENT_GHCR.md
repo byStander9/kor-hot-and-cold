@@ -71,7 +71,7 @@ docker run --rm -p 7860:7860 ghcr.io/bystander9/kor-hot-and-cold-api:latest
 
 ```bash
 curl http://127.0.0.1:7860/api/health
-curl "http://127.0.0.1:7860/api/game?seed=123&v=1"
+curl "http://127.0.0.1:7860/api/game?seed=123&v=2"
 ```
 
 실행 호스트를 정한 뒤에는 HTTPS 주소에서 health, game, guess, CORS preflight, 정답 비노출, cold start를 다시 검증하고 그 주소를 모바일 `EXPO_PUBLIC_API_BASE_URL`에 설정해야 합니다.

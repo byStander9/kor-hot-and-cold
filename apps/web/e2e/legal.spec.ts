@@ -6,10 +6,12 @@ test("개인정보처리방침이 실제 데이터 흐름과 문의 경로를 �
   await expect(page.getByRole("heading", { name: "개인정보처리방침" })).toBeVisible();
   await expect(page.getByText("회원가입이나 로그인을 요구하지 않으며")).toBeVisible();
   await expect(page.getByText("이용자가 입력한 추측어")).toBeVisible();
-  await expect(page.getByRole("link", { name: "Hugging Face 개인정보처리방침" })).toHaveAttribute(
-    "href",
-    "https://huggingface.co/privacy",
-  );
+  await expect(
+    page.getByText("운영 호스트는 아직 확정되지 않았습니다.", { exact: false }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("최종 운영 호스트, 실제 로그 설정과 보관 기간", { exact: false }),
+  ).toBeVisible();
   await expect(page.getByRole("link", { name: "GitHub Issues" })).toHaveAttribute(
     "href",
     "https://github.com/byStander9/kor-hot-and-cold/issues/new",

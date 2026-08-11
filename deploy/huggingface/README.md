@@ -14,7 +14,7 @@ license: mit
 
 - 웹 게임: 이 Space의 App 탭
 - 상태 확인: `/api/health`
-- 게임 메타데이터: `/api/game?seed=123&v=1`
+- 게임 메타데이터: `/api/game?seed=123&v=2`
 - 소스·문서: [GitHub 저장소](https://github.com/byStander9/kor-hot-and-cold)
 - 개인정보처리방침: `/privacy`
 - 데이터·오픈소스 출처: `/licenses`

@@ -4,8 +4,8 @@ import Link from "next/link";
 import styles from "../legal.module.css";
 
 export const metadata: Metadata = {
-  title: "개인정보처리방침 | 한국어 Hot and Cold",
-  description: "한국어 Hot and Cold의 개인정보 처리 안내",
+  title: "개인정보처리방침 | 뜨겁고 차갑게",
+  description: "뜨겁고 차갑게의 개인정보 처리 안내",
 };
 
 export default function PrivacyPage() {
@@ -24,7 +24,7 @@ export default function PrivacyPage() {
       <section className={styles.section}>
         <h2>1. 서비스가 직접 수집·저장하는 정보</h2>
         <p>
-          한국어 Hot and Cold는 회원가입이나 로그인을 요구하지 않으며, 앱 자체의
+          뜨겁고 차갑게는 회원가입이나 로그인을 요구하지 않으며, 앱 자체의
           사용자 계정 데이터베이스를 운영하지 않습니다. 광고, 이용자 분석 도구,
           푸시 알림 기능도 사용하지 않습니다.
         </p>
@@ -52,21 +52,14 @@ export default function PrivacyPage() {
       <section className={styles.section}>
         <h2>3. 호스팅 인프라</h2>
         <p>
-          게임 서버는 Hugging Face Spaces에서 운영됩니다. Hugging Face는 서비스
-          제공과 보안 등을 위해 접속 일시·위치, IP 주소, 기기와 브라우저 정보 등
-          표준 서비스 이용 정보를 자동으로 처리할 수 있습니다. 이 처리는 한국어 Hot
-          and Cold의 앱 데이터베이스와 별개이며, 보관 기간과 국외 처리 등 자세한
-          내용은
-          {" "}
-          <a
-            className={styles.inlineLink}
-            href="https://huggingface.co/privacy"
-            rel="noreferrer"
-            target="_blank"
-          >
-            Hugging Face 개인정보처리방침
-          </a>
-          을 확인해 주세요.
+          운영 호스트는 아직 확정되지 않았습니다. 최종 호스팅 사업자는 서비스 제공과
+          보안을 위해 IP 주소, 요청 시각, 기기·브라우저 정보 같은 표준 접속 정보를
+          처리할 수 있습니다. 사업자가 확정되면 처리 항목, 국외 처리 여부, 로그 보관
+          기간과 해당 사업자의 개인정보처리방침을 이 문서에 반영합니다.
+        </p>
+        <p className={styles.notice}>
+          이 방침은 출시 전 반드시 최종 운영 호스트, 실제 로그 설정과 보관 기간,
+          공개 개인정보 문의 이메일로 갱신해야 합니다.
         </p>
       </section>
 
@@ -75,8 +68,8 @@ export default function PrivacyPage() {
         <p>
           이 앱은 삭제를 요청할 수 있는 서버 계정이나 영구 플레이 데이터를 자체
           보유하지 않습니다. 기기에 저장된 진행 정보는 운영체제의 앱 데이터 삭제
-          기능으로 지울 수 있습니다. Hugging Face가 처리한 정보에 관한 권리는 해당
-          사업자의 방침과 문의 절차를 따릅니다.
+          기능으로 지울 수 있습니다. 최종 호스팅 사업자가 처리하는 접속 정보에 관한
+          권리는 출시 전에 고지할 해당 사업자의 방침과 문의 절차를 따릅니다.
         </p>
         <p className={styles.notice}>
           프로젝트 개인정보 문의는
