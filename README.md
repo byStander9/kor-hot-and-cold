@@ -220,7 +220,7 @@ npm run dev -- --hostname 0.0.0.0
 
 ```powershell
 cd apps/mobile
-Copy-Item .env.example .env
+Copy-Item .env.example .env.local
 ```
 
 ```dotenv

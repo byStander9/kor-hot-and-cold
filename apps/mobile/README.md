@@ -19,10 +19,10 @@
    ```powershell
    cd ../mobile
    npm install
-   Copy-Item .env.example .env
+   Copy-Item .env.example .env.local
    ```
 
-4. `.env`의 예시 주소를 실제 PC IPv4 주소로 바꿉니다.
+4. `.env.local`의 예시 주소를 실제 PC IPv4 주소로 바꿉니다. 이 파일은 Git에서 무시되므로 PC별 LAN 주소가 커밋되지 않습니다.
 
    ```dotenv
    EXPO_PUBLIC_API_BASE_URL=http://192.168.0.10:3000
