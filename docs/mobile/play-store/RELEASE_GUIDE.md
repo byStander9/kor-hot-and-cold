@@ -97,7 +97,7 @@ apps/mobile/android/app/build/outputs/bundle/release/app-release.aab
 3. Play App Signing을 설정합니다.
 4. 첫 AAB를 내부 테스트 트랙에 수동 업로드합니다.
 5. 개인정보처리방침 URL, Data Safety, 앱 액세스, 광고 여부, 콘텐츠 등급, 대상 연령을 작성합니다.
-6. 디자인 담당이 제공한 스크린샷·아이콘·feature graphic을 등록합니다.
+6. [Play 스토어 그래픽 자산](../store-assets/README.md)의 아이콘·feature graphic과 최종 출시 빌드 스크린샷을 등록합니다.
 7. 실기기 내부 테스트를 통과한 뒤 비공개 테스트와 production 순서로 진행합니다.
 
 EAS Submit 자동화에는 Google Service Account가 필요합니다. 자격증명이 없는 첫 출시는 Play Console에서 수동으로 진행하는 편이 단순합니다.
@@ -121,7 +121,7 @@ EAS Submit 자동화에는 Google Service Account가 필요합니다. 자격증�
 - IP로 위치를 추론하거나 요청을 분석 용도로 재사용한다면 해당 데이터 유형과 목적을 신고해야 합니다.
 - 전송 중 암호화 항목은 모든 운영 URL이 HTTPS일 때만 선택합니다.
 
-[Google Play Data Safety 안내](https://support.google.com/googleplay/android-developer/answer/10787469)를 기준으로 실제 서버 동작과 일치시킵니다. 정책 문안은 [개인정보처리방침 초안](PRIVACY_POLICY_DRAFT_KO.md)을 사용하고, 최종 통합되는 Google Play 출시 체크리스트와 함께 다시 확인합니다.
+[Google Play Data Safety 안내](https://support.google.com/googleplay/android-developer/answer/10787469)를 기준으로 실제 서버 동작과 일치시킵니다. 정책 문안은 [개인정보처리방침 초안](PRIVACY_POLICY_DRAFT_KO.md)을 사용하고, [Google Play 출시 요구사항 체크리스트](../GOOGLE_PLAY_RELEASE_CHECKLIST.md)와 함께 다시 확인합니다. 공개 연락처를 정하기 전에는 [개인정보 연락처 준비 메모](../PRIVACY_RELEASE_NOTE.md)도 확인합니다.
 
 ## 7. 업데이트 규칙
 

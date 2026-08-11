@@ -65,3 +65,4 @@ npm run export:android
 실기기 검증 절차는 [`docs/mobile/ANDROID_TEST_CHECKLIST.md`](../../docs/mobile/ANDROID_TEST_CHECKLIST.md)에 있습니다.
 
 Google Play AAB 빌드와 제출 절차는 [`docs/mobile/play-store/RELEASE_GUIDE.md`](../../docs/mobile/play-store/RELEASE_GUIDE.md)에 있습니다.
+제출 직전 확인 항목과 등록용 그래픽은 각각 [`docs/mobile/GOOGLE_PLAY_RELEASE_CHECKLIST.md`](../../docs/mobile/GOOGLE_PLAY_RELEASE_CHECKLIST.md), [`docs/mobile/store-assets/README.md`](../../docs/mobile/store-assets/README.md)에 있습니다.
