@@ -7,8 +7,8 @@ import {
   GAME_DATA_VERSION,
   getHintTargetRank,
   getTemperature,
-  selectAnswerWordId,
 } from "./game";
+import { getSeedGame } from "./game-metadata";
 
 type DictionaryWord = {
   id: number;
@@ -99,7 +99,7 @@ const vectors = new Int8Array(
   vectorBuffer.byteLength,
 );
 const wordByText = new Map(dictionary.words.map((word) => [word.word, word]));
-const aliasWordIdByText = new Map(Object.entries(aliases.aliases));
+const aliasWordIdByText = aliases.aliases;
 const nounParticles = [
   "에게",
   "에서",
@@ -122,15 +122,6 @@ const nounParticles = [
 ] as const;
 const rankingCache = new Map<number, SeedRanking>();
 const MAX_CACHED_RANKINGS = 4;
-
-export function getSeedGame(seed: number) {
-  return {
-    seed,
-    version: GAME_DATA_VERSION,
-    answerWordId: selectAnswerWordId(seed, dictionary.words.length),
-    wordCount: dictionary.words.length,
-  };
-}
 
 function createSeedRanking(seed: number): SeedRanking {
   const game = getSeedGame(seed);
@@ -181,6 +172,10 @@ function getSeedRanking(seed: number) {
   return ranking;
 }
 
+export function warmSeedRanking(seed: number) {
+  getSeedRanking(seed);
+}
+
 function makeGuessResult(word: DictionaryWord, ranking: SeedRanking) {
   const rank = ranking.ranks[word.id];
   return {
@@ -204,7 +199,7 @@ function findNounAliasWord(guess: string) {
 }
 
 export function judgeGuess(guess: string, seed: number) {
-  const aliasWordId = aliasWordIdByText.get(guess);
+  const aliasWordId = aliasWordIdByText[guess];
   const word =
     wordByText.get(guess) ??
     (aliasWordId === undefined ? undefined : dictionary.words[aliasWordId]) ??

@@ -1,5 +1,7 @@
+import { after } from "next/server";
+
 import { isSupportedGameVersion, parseSeed } from "@/lib/game";
-import { getSeedGame } from "@/lib/game-data";
+import { getSeedGame } from "@/lib/game-metadata";
 
 export const dynamic = "force-dynamic";
 
@@ -10,5 +12,9 @@ export async function GET(request: Request) {
     return Response.json({ error: "시드 또는 게임 버전이 올바르지 않습니다." }, { status: 422 });
   }
   const game = getSeedGame(seed);
+  after(async () => {
+    const { warmSeedRanking } = await import("@/lib/game-data");
+    warmSeedRanking(seed);
+  });
   return Response.json({ seed: game.seed, version: game.version, wordCount: game.wordCount });
 }

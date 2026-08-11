@@ -1,5 +1,6 @@
 import { isSupportedGameVersion, parseSeed } from "@/lib/game";
-import { getAdaptiveHint, getSeedGame } from "@/lib/game-data";
+import { getAdaptiveHint } from "@/lib/game-data";
+import { getSeedGame } from "@/lib/game-metadata";
 
 type HintRequest = {
   bestRank?: unknown;
