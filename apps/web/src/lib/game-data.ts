@@ -99,7 +99,7 @@ const vectors = new Int8Array(
   vectorBuffer.byteLength,
 );
 const wordByText = new Map(dictionary.words.map((word) => [word.word, word]));
-const aliasWordIdByText = new Map(Object.entries(aliases.aliases));
+const aliasWordIdByText = aliases.aliases;
 const nounParticles = [
   "에게",
   "에서",
@@ -199,7 +199,7 @@ function findNounAliasWord(guess: string) {
 }
 
 export function judgeGuess(guess: string, seed: number) {
-  const aliasWordId = aliasWordIdByText.get(guess);
+  const aliasWordId = aliasWordIdByText[guess];
   const word =
     wordByText.get(guess) ??
     (aliasWordId === undefined ? undefined : dictionary.words[aliasWordId]) ??
