@@ -16,7 +16,7 @@ describe('시드별 진행 상태', () => {
   it('화면 복원에 필요한 최소 필드만 저장하고 복원한다', () => {
     const stored = createStoredGame({
       seed: 7,
-      gameVersion: 1,
+      gameVersion: 2,
       game: {
         guesses: [guess],
         hintCount: 1,
@@ -26,7 +26,7 @@ describe('시드별 진행 상태', () => {
     });
     const restored = parseStoredGame(JSON.stringify(stored), {
       seed: 7,
-      gameVersion: 1,
+      gameVersion: 2,
       wordCount: 280804,
     });
 
@@ -46,7 +46,7 @@ describe('시드별 진행 상태', () => {
   it('다른 시드나 깨진 JSON 기록은 복원하지 않는다', () => {
     const stored = createStoredGame({
       seed: 7,
-      gameVersion: 1,
+      gameVersion: 2,
       game: {
         guesses: [guess],
         hintCount: 0,
@@ -58,14 +58,35 @@ describe('시드별 진행 상태', () => {
     expect(
       parseStoredGame(JSON.stringify(stored), {
         seed: 8,
-        gameVersion: 1,
+        gameVersion: 2,
         wordCount: 280804,
       }),
     ).toBeNull();
     expect(
       parseStoredGame('{', {
         seed: 7,
-        gameVersion: 1,
+        gameVersion: 2,
+        wordCount: 280804,
+      }),
+    ).toBeNull();
+  });
+
+  it('v1 진행 기록을 v2 게임으로 옮기지 않는다', () => {
+    const legacy = createStoredGame({
+      seed: 7,
+      gameVersion: 1,
+      game: {
+        guesses: [guess],
+        hintCount: 1,
+        gaveUp: false,
+        revealedAnswer: '',
+      },
+    });
+
+    expect(
+      parseStoredGame(JSON.stringify(legacy), {
+        seed: 7,
+        gameVersion: 2,
         wordCount: 280804,
       }),
     ).toBeNull();

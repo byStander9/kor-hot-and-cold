@@ -8,6 +8,6 @@ describe("GET /api/health", () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get("Cache-Control")).toBe("no-store");
-    await expect(response.json()).resolves.toEqual({ status: "ok", version: 1 });
+    await expect(response.json()).resolves.toEqual({ status: "ok", version: 2 });
   });
 });

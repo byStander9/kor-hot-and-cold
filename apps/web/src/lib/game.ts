@@ -1,6 +1,7 @@
 export const MAX_GUESS_LENGTH = 20;
 export const MAX_SEED = 0xffffffff;
-export const GAME_DATA_VERSION = 1;
+export const GAME_DATA_VERSION = 2;
+export const LEXICON_DATA_VERSION = 1;
 
 export type Temperature = {
   label: "정답" | "매우 뜨거움" | "뜨거움" | "따뜻함" | "차가움";

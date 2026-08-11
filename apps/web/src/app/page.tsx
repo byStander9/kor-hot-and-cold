@@ -21,8 +21,35 @@ export default async function Home({ searchParams }: Props) {
     const randomSeed = randomBytes(4).readUInt32BE(0);
     redirect(`/?seed=${randomSeed}&v=${GAME_DATA_VERSION}`);
   }
-  if (!isSupportedGameVersion(Array.isArray(query.v) ? query.v[0] : query.v)) {
-    redirect(`/?seed=${seed}&v=${GAME_DATA_VERSION}`);
+  const requestedVersion = Array.isArray(query.v) ? query.v[0] : query.v;
+  if (!isSupportedGameVersion(requestedVersion)) {
+    if (requestedVersion === undefined) {
+      redirect(`/?seed=${seed}&v=${GAME_DATA_VERSION}`);
+    }
+
+    const randomSeed = randomBytes(4).readUInt32BE(0);
+    return (
+      <main className={styles.page}>
+        <header className={styles.header}>
+          <a className={styles.brand} href="/" aria-label="새 게임으로 이동">
+            <span className={styles.brandHot}>HOT</span>
+            <span className={styles.brandAnd}>&amp;</span>
+            <span className={styles.brandCold}>COLD</span>
+          </a>
+        </header>
+        <section className={styles.versionNotice} aria-labelledby="version-title">
+          <p className={styles.eyebrow}>안전 정답 풀 v2</p>
+          <h1 id="version-title">이전 게임 버전은 열 수 없어요.</h1>
+          <p>
+            이 링크는 안전 정답 풀을 적용하기 전 버전이라 진행 기록을 새 버전으로
+            옮기지 않습니다. 새 시드로 안전한 게임을 시작해 주세요.
+          </p>
+          <a href={`/?seed=${randomSeed}&v=${GAME_DATA_VERSION}`}>
+            안전한 새 게임 시작
+          </a>
+        </section>
+      </main>
+    );
   }
 
   const game = getSeedGame(seed);

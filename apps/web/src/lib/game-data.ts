@@ -4,11 +4,11 @@ import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 import {
-  GAME_DATA_VERSION,
+  LEXICON_DATA_VERSION,
   getHintTargetRank,
   getTemperature,
 } from "./game";
-import { getSeedGame } from "./game-metadata";
+import { getAnswerPoolWordIds, getSeedGame } from "./game-metadata";
 
 type DictionaryWord = {
   id: number;
@@ -70,7 +70,9 @@ const aliases = readJson<Aliases>("aliases.json");
 const vectorMetadata = readJson<VectorMetadata>("vectors.json");
 
 if (
-  vectorMetadata.version !== GAME_DATA_VERSION ||
+  dictionary.version !== LEXICON_DATA_VERSION ||
+  aliases.version !== LEXICON_DATA_VERSION ||
+  vectorMetadata.version !== LEXICON_DATA_VERSION ||
   vectorMetadata.format !== "int8-row-major" ||
   vectorMetadata.wordCount !== dictionary.words.length
 ) {
@@ -212,7 +214,26 @@ export function judgeGuess(guess: string, seed: number) {
 export function getAdaptiveHint(bestRank: number, seed: number) {
   const ranking = getSeedRanking(seed);
   const targetRank = getHintTargetRank(bestRank);
-  const word = dictionary.words[ranking.wordIdsByRank[targetRank - 1]];
+  let selectedWordId = -1;
+  let selectedRank = Number.POSITIVE_INFINITY;
+  let selectedDistance = Number.POSITIVE_INFINITY;
+
+  for (const wordId of getAnswerPoolWordIds()) {
+    const rank = ranking.ranks[wordId];
+    if (rank >= bestRank) continue;
+
+    const distance = Math.abs(rank - targetRank);
+    if (
+      distance < selectedDistance ||
+      (distance === selectedDistance && rank < selectedRank)
+    ) {
+      selectedWordId = wordId;
+      selectedRank = rank;
+      selectedDistance = distance;
+    }
+  }
+
+  const word = selectedWordId < 0 ? undefined : dictionary.words[selectedWordId];
   return word ? makeGuessResult(word, ranking) : null;
 }
 

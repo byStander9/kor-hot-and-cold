@@ -109,42 +109,42 @@ for (let round = 0; round < rounds; round += 1) {
   try {
     await waitForServer();
     const baseSeed = 100_000 + round * 100;
-    const gameCold = await request(`/api/game?seed=${baseSeed}&v=1`);
+    const gameCold = await request(`/api/game?seed=${baseSeed}&v=2`);
     await new Promise((resolve) => setTimeout(resolve, settleMs));
     const firstGuessCold = await post("/api/guess", {
       guess: "기술",
       seed: baseSeed,
-      version: 1,
+      version: 2,
     });
-    const gameWarm = await request(`/api/game?seed=${baseSeed + 1}&v=1`);
+    const gameWarm = await request(`/api/game?seed=${baseSeed + 1}&v=2`);
     await new Promise((resolve) => setTimeout(resolve, settleMs));
     const firstGuessWarm = await post("/api/guess", {
       guess: "사랑",
       seed: baseSeed,
-      version: 1,
+      version: 2,
     });
     const hintCold = await post("/api/hint", {
       bestRank: 100_000,
       seed: baseSeed + 2,
-      version: 1,
+      version: 2,
     });
     const rankingsCold = await request(
-      `/api/rankings?seed=${baseSeed + 3}&v=1&offset=0&limit=500`,
+      `/api/rankings?seed=${baseSeed + 3}&v=2&offset=0&limit=500`,
     );
     const rankingsWarm = await request(
-      `/api/rankings?seed=${baseSeed + 3}&v=1&offset=500&limit=500`,
+      `/api/rankings?seed=${baseSeed + 3}&v=2&offset=500&limit=500`,
     );
     const concurrentStartedAt = performance.now();
     await Promise.all([
       post("/api/guess", {
         guess: "기술",
         seed: baseSeed + 4,
-        version: 1,
+        version: 2,
       }),
       post("/api/guess", {
         guess: "사랑",
         seed: baseSeed + 4,
-        version: 1,
+        version: 2,
       }),
     ]);
     const sameSeedConcurrent = performance.now() - concurrentStartedAt;
