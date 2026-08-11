@@ -92,6 +92,20 @@
   font-weight: 650;
 }
 
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  margin-top: 28px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.footer a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 @media (max-width: 560px) {
   .page { width: min(100% - 24px, 760px); padding-top: 12px; }
   .header { padding-bottom: 18px; }

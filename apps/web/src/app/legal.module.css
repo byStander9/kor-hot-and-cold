@@ -1,0 +1,78 @@
+.page {
+  width: min(100% - 32px, 760px);
+  margin: 0 auto;
+  padding: 40px 0 72px;
+}
+
+.backLink,
+.inlineLink {
+  color: var(--cold-dark);
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.header {
+  margin-top: 40px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--line);
+}
+
+.eyebrow {
+  color: var(--hot);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.header h1 {
+  margin: 10px 0 0;
+  font-size: clamp(2rem, 7vw, 3.5rem);
+  letter-spacing: -0.045em;
+}
+
+.effectiveDate {
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.section {
+  padding-top: 32px;
+}
+
+.section h2 {
+  margin: 0 0 12px;
+  font-size: 1.2rem;
+}
+
+.section h3 {
+  margin: 24px 0 8px;
+  font-size: 1rem;
+}
+
+.section p,
+.section li {
+  color: var(--ink-soft);
+  line-height: 1.75;
+  word-break: keep-all;
+}
+
+.section ul {
+  margin: 12px 0 0;
+  padding-left: 22px;
+}
+
+.notice {
+  margin-top: 20px;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.65);
+}
+
+@media (max-width: 560px) {
+  .page { width: min(100% - 24px, 760px); padding-top: 28px; }
+  .header { margin-top: 32px; }
+}

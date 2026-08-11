@@ -65,6 +65,11 @@ export default async function Home({ searchParams }: Props) {
           활용형은 기본형으로 자동 연결합니다.
         </p>
       </aside>
+
+      <footer className={styles.footer}>
+        <a href="/privacy">개인정보처리방침</a>
+        <a href="/licenses">데이터·오픈소스 출처</a>
+      </footer>
     </main>
   );
 }
