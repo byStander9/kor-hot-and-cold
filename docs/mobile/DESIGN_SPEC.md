@@ -1,7 +1,7 @@
 # 한국어 Hot and Cold 모바일 디자인 명세
 
-> 상태: 모바일 MVP 구현 기준  
-> 대상: Android 우선, Expo/React Native, 360–430dp 세로 화면  
+> 상태: 모바일 MVP 구현 기준<br>
+> 대상: Android 우선, Expo/React Native, 360–430dp 세로 화면<br>
 > 기준: 웹 MVP의 크림색 종이 배경, hot/cold 색상, 정확한 순위 중심 정보 구조를 계승한다.
 
 ## 1. 제품 목표
