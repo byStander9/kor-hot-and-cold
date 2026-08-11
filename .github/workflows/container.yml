@@ -1,0 +1,96 @@
+name: Container image
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*.*.*"]
+  pull_request:
+    paths:
+      - ".github/workflows/container.yml"
+      - ".dockerignore"
+      - "Dockerfile"
+      - "LICENSE"
+      - "apps/web/**"
+      - "data/demo/**"
+      - "deploy/container/**"
+
+concurrency:
+  group: container-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  IMAGE_NAME: ghcr.io/bystander9/kor-hot-and-cold-api
+
+jobs:
+  build:
+    name: Build only
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
+      - name: Build container image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64
+          push: false
+          cache-from: type=gha,scope=production-container
+          cache-to: type=gha,mode=max,scope=production-container
+
+  publish:
+    name: Publish to GHCR
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Generate image metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+            type=raw,value=manual,enable=${{ github.event_name == 'workflow_dispatch' }}
+            type=sha,format=long
+          labels: |
+            org.opencontainers.image.title=Korean Hot and Cold API
+            org.opencontainers.image.description=시드 기반 한국어 의미 탐색 게임 API
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+      - name: Build and push container image
+        id: push
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          annotations: ${{ steps.meta.outputs.annotations }}
+          provenance: mode=max
+          cache-from: type=gha,scope=production-container
+          cache-to: type=gha,mode=max,scope=production-container
+      - name: Attest image provenance
+        uses: actions/attest@v4
+        with:
+          subject-name: ${{ env.IMAGE_NAME }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
