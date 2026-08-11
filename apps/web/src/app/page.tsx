@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 
 import GameBoard from "@/components/game-board";
 import { GAME_DATA_VERSION, isSupportedGameVersion, parseSeed } from "@/lib/game";
-import { getSeedGame } from "@/lib/game-data";
+import { getSeedGame } from "@/lib/game-metadata";
 
 import styles from "./page.module.css";
 

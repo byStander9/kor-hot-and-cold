@@ -7,8 +7,8 @@ import {
   GAME_DATA_VERSION,
   getHintTargetRank,
   getTemperature,
-  selectAnswerWordId,
 } from "./game";
+import { getSeedGame } from "./game-metadata";
 
 type DictionaryWord = {
   id: number;
@@ -123,15 +123,6 @@ const nounParticles = [
 const rankingCache = new Map<number, SeedRanking>();
 const MAX_CACHED_RANKINGS = 4;
 
-export function getSeedGame(seed: number) {
-  return {
-    seed,
-    version: GAME_DATA_VERSION,
-    answerWordId: selectAnswerWordId(seed, dictionary.words.length),
-    wordCount: dictionary.words.length,
-  };
-}
-
 function createSeedRanking(seed: number): SeedRanking {
   const game = getSeedGame(seed);
   const dimensions = vectorMetadata.dimensions;
@@ -179,6 +170,10 @@ function getSeedRanking(seed: number) {
     if (oldestSeed !== undefined) rankingCache.delete(oldestSeed);
   }
   return ranking;
+}
+
+export function warmSeedRanking(seed: number) {
+  getSeedRanking(seed);
 }
 
 function makeGuessResult(word: DictionaryWord, ranking: SeedRanking) {
