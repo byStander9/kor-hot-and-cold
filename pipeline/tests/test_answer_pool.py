@@ -60,3 +60,4 @@ def test_tracked_answer_pool_matches_dictionary_policy_and_reviewed_hash() -> No
     assert tracked["count"] == 3186
     assert tracked["sha256"] == "6e02bede36c355668e978fa566e1945925b38ebfe55dd10267a1fdedf1300b2c"
     assert tracked["wordIds"] == sorted(set(tracked["wordIds"]))
+    assert set(policy["deniedAnswerWords"]).issubset(policy["sensitiveRankingWords"])

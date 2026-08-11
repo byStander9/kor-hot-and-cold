@@ -91,6 +91,7 @@ export function getRankingPage(options: {
   version: number;
   offset: number;
   limit?: number;
+  includeSensitive?: boolean;
 }) {
   const query = new URLSearchParams({
     seed: String(options.seed),
@@ -98,5 +99,6 @@ export function getRankingPage(options: {
     offset: String(options.offset),
     limit: String(options.limit ?? 200),
   });
+  if (options.includeSensitive) query.set('includeSensitive', '1');
   return requestJson<RankingPageResponse>(`/api/rankings?${query}`);
 }

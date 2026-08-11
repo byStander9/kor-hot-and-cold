@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
 
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import GameBoard from "@/components/game-board";
@@ -31,11 +32,11 @@ export default async function Home({ searchParams }: Props) {
     return (
       <main className={styles.page}>
         <header className={styles.header}>
-          <a className={styles.brand} href="/" aria-label="새 게임으로 이동">
+          <Link className={styles.brand} href="/" aria-label="새 게임으로 이동">
             <span className={styles.brandHot}>HOT</span>
             <span className={styles.brandAnd}>&amp;</span>
             <span className={styles.brandCold}>COLD</span>
-          </a>
+          </Link>
         </header>
         <section className={styles.versionNotice} aria-labelledby="version-title">
           <p className={styles.eyebrow}>안전 정답 풀 v2</p>

@@ -4,6 +4,7 @@ import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 import {
+  GAME_DATA_VERSION,
   LEXICON_DATA_VERSION,
   getHintTargetRank,
   getTemperature,
@@ -39,11 +40,19 @@ type VectorMetadata = {
   shards: Array<{ file: string; startWordId: number; wordCount: number }>;
 };
 
+type SafetyPolicy = {
+  policyVersion: number;
+  gameVersion: number;
+  lexiconVersion: number;
+  sensitiveRankingWords: string[];
+};
+
 type SeedRanking = {
   seed: number;
   answerWordId: number;
   ranks: Int32Array;
   wordIdsByRank: Int32Array;
+  safeWordIdsByRank: Int32Array;
 };
 
 const dataDirectoryCandidates = [
@@ -68,11 +77,17 @@ function readJson<T>(relativePath: string): T {
 const dictionary = readJson<Dictionary>("dictionary.json");
 const aliases = readJson<Aliases>("aliases.json");
 const vectorMetadata = readJson<VectorMetadata>("vectors.json");
+const safetyPolicy = JSON.parse(
+  readFileSync(path.resolve(dataDirectory, "../safety/answer-policy.json"), "utf8"),
+) as SafetyPolicy;
 
 if (
   dictionary.version !== LEXICON_DATA_VERSION ||
   aliases.version !== LEXICON_DATA_VERSION ||
   vectorMetadata.version !== LEXICON_DATA_VERSION ||
+  safetyPolicy.policyVersion !== 1 ||
+  safetyPolicy.gameVersion !== GAME_DATA_VERSION ||
+  safetyPolicy.lexiconVersion !== LEXICON_DATA_VERSION ||
   vectorMetadata.format !== "int8-row-major" ||
   vectorMetadata.wordCount !== dictionary.words.length
 ) {
@@ -101,6 +116,7 @@ const vectors = new Int8Array(
   vectorBuffer.byteLength,
 );
 const wordByText = new Map(dictionary.words.map((word) => [word.word, word]));
+const sensitiveRankingWords = new Set(safetyPolicy.sensitiveRankingWords);
 const aliasWordIdByText = aliases.aliases;
 const nounParticles = [
   "에게",
@@ -154,7 +170,17 @@ function createSeedRanking(seed: number): SeedRanking {
     ranks[wordIdsByRank[index]] = index + 1;
   }
 
-  return { seed, answerWordId: game.answerWordId, ranks, wordIdsByRank };
+  const safeWordIdsByRank = wordIdsByRank.filter(
+    (wordId) => !sensitiveRankingWords.has(dictionary.words[wordId].word),
+  );
+
+  return {
+    seed,
+    answerWordId: game.answerWordId,
+    ranks,
+    wordIdsByRank,
+    safeWordIdsByRank,
+  };
 }
 
 function getSeedRanking(seed: number) {
@@ -237,16 +263,24 @@ export function getAdaptiveHint(bestRank: number, seed: number) {
   return word ? makeGuessResult(word, ranking) : null;
 }
 
-export function getRankingPage(seed: number, offset: number, limit: number) {
+export function getRankingPage(
+  seed: number,
+  offset: number,
+  limit: number,
+  includeSensitive = false,
+) {
   const ranking = getSeedRanking(seed);
-  const end = Math.min(offset + limit, ranking.wordIdsByRank.length);
+  const visibleWordIds = includeSensitive
+    ? ranking.wordIdsByRank
+    : ranking.safeWordIdsByRank;
+  const end = Math.min(offset + limit, visibleWordIds.length);
   const items = [];
 
   for (let index = offset; index < end; index += 1) {
-    const wordId = ranking.wordIdsByRank[index];
+    const wordId = visibleWordIds[index];
     items.push({
       word: dictionary.words[wordId].word,
-      rank: index + 1,
+      rank: ranking.ranks[wordId],
     });
   }
 
@@ -254,8 +288,8 @@ export function getRankingPage(seed: number, offset: number, limit: number) {
     items,
     offset,
     limit,
-    total: ranking.wordIdsByRank.length,
-    nextOffset: end < ranking.wordIdsByRank.length ? end : null,
+    total: visibleWordIds.length,
+    nextOffset: end < visibleWordIds.length ? end : null,
   };
 }
 

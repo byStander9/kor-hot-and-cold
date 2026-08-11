@@ -23,6 +23,7 @@ export async function GET(request: Request) {
 
   const offset = parseInteger(query.get("offset") ?? "0");
   const limit = parseInteger(query.get("limit") ?? String(DEFAULT_LIMIT));
+  const includeSensitive = query.get("includeSensitive") === "1";
   const wordCount = getSeedGame(seed).wordCount;
 
   if (
@@ -39,5 +40,5 @@ export async function GET(request: Request) {
     );
   }
 
-  return Response.json(getRankingPage(seed, offset, limit));
+  return Response.json(getRankingPage(seed, offset, limit, includeSensitive));
 }

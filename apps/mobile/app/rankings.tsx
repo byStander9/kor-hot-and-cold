@@ -3,7 +3,9 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -44,6 +46,7 @@ export default function RankingsScreen() {
   const [footerState, setFooterState] = useState<'idle' | 'loading' | 'error'>(
     'idle',
   );
+  const [includeSensitive, setIncludeSensitive] = useState(false);
   const loadingOffset = useRef<number | null>(null);
 
   const valid =
@@ -66,6 +69,7 @@ export default function RankingsScreen() {
           version,
           offset,
           limit: PAGE_SIZE,
+          includeSensitive,
         });
         setItems((current) => {
           if (offset === 0) return page.items;
@@ -82,12 +86,40 @@ export default function RankingsScreen() {
         loadingOffset.current = null;
       }
     },
-    [seed, valid, version],
+    [includeSensitive, seed, valid, version],
   );
 
   useEffect(() => {
     if (valid) void loadPage(0);
   }, [loadPage, valid]);
+
+  function applySensitivePreference(nextValue: boolean) {
+    setItems([]);
+    setNextOffset(0);
+    setFirstState('loading');
+    setFooterState('idle');
+    loadingOffset.current = null;
+    setIncludeSensitive(nextValue);
+  }
+
+  function toggleSensitiveWords() {
+    if (includeSensitive) {
+      applySensitivePreference(false);
+      return;
+    }
+
+    const message =
+      '전체 사전에는 성인·비속어·폭력·약물 관련 단어가 표시될 수 있습니다. 이 선택은 현재 화면에만 적용되고 저장하거나 공유하지 않습니다.';
+    if (Platform.OS === 'web') {
+      if (globalThis.confirm(message)) applySensitivePreference(true);
+      return;
+    }
+
+    Alert.alert('민감 단어 포함 전체 순위', message, [
+      { text: '취소', style: 'cancel' },
+      { text: '포함해서 보기', onPress: () => applySensitivePreference(true) },
+    ]);
+  }
 
   if (!valid) {
     return (
@@ -121,6 +153,29 @@ export default function RankingsScreen() {
         <Text style={styles.summaryLabel}>정답</Text>
         <Text style={styles.answer}>{answer}</Text>
         <Text style={styles.total}>총 {total.toLocaleString('ko-KR')}개 단어</Text>
+      </View>
+      <View style={styles.safetyCard}>
+        <View style={styles.safetyCopy}>
+          <Text style={styles.safetyTitle}>
+            민감 단어 {includeSensitive ? '포함' : '제외'}
+          </Text>
+          <Text style={styles.safetyBody}>
+            기본 순위는 명시된 민감 단어를 숨깁니다. 선택은 저장·공유되지 않아요.
+          </Text>
+        </View>
+        <Pressable
+          accessibilityHint="민감 단어가 표시될 수 있다는 경고를 먼저 확인합니다"
+          accessibilityLabel={
+            includeSensitive ? '민감 단어 다시 숨기기' : '민감 단어 포함해서 보기'
+          }
+          accessibilityRole="button"
+          accessibilityState={{ selected: includeSensitive }}
+          onPress={toggleSensitiveWords}
+          style={({ pressed }) => [styles.safetyButton, pressed && styles.pressed]}>
+          <Text style={styles.safetyButtonText}>
+            {includeSensitive ? '다시 숨기기' : '포함해서 보기'}
+          </Text>
+        </Pressable>
       </View>
     </View>
   );
@@ -233,6 +288,28 @@ const styles = StyleSheet.create({
   summaryLabel: { color: colors.muted, fontSize: 12, fontWeight: '600' },
   answer: { color: colors.ink, fontSize: 28, fontWeight: '800', lineHeight: 36 },
   total: { color: colors.muted, fontSize: 14, marginTop: spacing.xs },
+  safetyCard: {
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderColor: colors.line,
+    borderRadius: 16,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: spacing.md,
+    padding: spacing.lg,
+  },
+  safetyCopy: { flex: 1, gap: spacing.xs },
+  safetyTitle: { color: colors.ink, fontSize: 14, fontWeight: '700' },
+  safetyBody: { color: colors.muted, fontSize: 12, lineHeight: 17 },
+  safetyButton: {
+    borderColor: colors.line,
+    borderRadius: 10,
+    borderWidth: 1,
+    justifyContent: 'center',
+    minHeight: 44,
+    paddingHorizontal: spacing.md,
+  },
+  safetyButtonText: { color: colors.ink, fontSize: 12, fontWeight: '700' },
   rankRow: {
     alignItems: 'center',
     borderBottomColor: colors.line,
@@ -286,4 +363,5 @@ const styles = StyleSheet.create({
   lightButtonText: { color: colors.ink, fontSize: 16, fontWeight: '600' },
   emptyState: { alignItems: 'center', gap: spacing.sm, padding: spacing.xxxl },
   emptyText: { color: colors.muted, fontSize: 14 },
+  pressed: { opacity: 0.72 },
 });

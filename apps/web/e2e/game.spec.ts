@@ -115,22 +115,37 @@ test("정답 공개 뒤 전체 순위를 페이지 단위로 반환한다", asyn
   expect(firstPage).toMatchObject({
     offset: 0,
     limit: 3,
-    total: game.wordCount,
     nextOffset: 3,
   });
+  expect(firstPage.total).toBeLessThan(game.wordCount);
   expect(firstPage.items).toHaveLength(3);
   expect(firstPage.items[0]).toEqual({ word: reveal.answer, rank: 1 });
 
   const lastPageResponse = await request.get(
-    `/api/rankings?seed=123456789&v=2&offset=${game.wordCount - 2}&limit=2`,
+    `/api/rankings?seed=123456789&v=2&offset=${firstPage.total - 2}&limit=2`,
   );
   expect(lastPageResponse.ok()).toBe(true);
   const lastPage = (await lastPageResponse.json()) as {
     items: Array<{ word: string; rank: number }>;
     nextOffset: number | null;
   };
-  expect(lastPage.items.at(-1)?.rank).toBe(game.wordCount);
   expect(lastPage.nextOffset).toBeNull();
+
+  const sensitiveGuessResponse = await request.post("/api/guess", {
+    data: { guess: "자살", seed: 123456789, version: 2 },
+  });
+  expect(sensitiveGuessResponse.ok()).toBe(true);
+  const sensitiveGuess = (await sensitiveGuessResponse.json()) as { rank: number };
+  const optInPageResponse = await request.get(
+    `/api/rankings?seed=123456789&v=2&offset=${sensitiveGuess.rank - 1}&limit=1&includeSensitive=1`,
+  );
+  expect(optInPageResponse.ok()).toBe(true);
+  const optInPage = (await optInPageResponse.json()) as {
+    items: Array<{ word: string; rank: number }>;
+    total: number;
+  };
+  expect(optInPage.total).toBe(game.wordCount);
+  expect(optInPage.items).toEqual([{ word: "자살", rank: sensitiveGuess.rank }]);
 
   const solvedResponse = await request.post("/api/guess", {
     data: { guess: reveal.answer, seed: 123456789, version: 2 },
@@ -181,8 +196,10 @@ test("게임을 포기한 뒤 전체 순위표를 펼친다", async ({ page }) =
   await page.getByRole("button", { name: "전체 순위 보기" }).click();
 
   await expect(page.getByRole("heading", { name: "전체 순위" })).toBeVisible();
-  await expect(page.getByText("280,804개 단어 · 1위부터 정렬")).toBeVisible();
+  await expect(page.getByText(/개 표시 · 실제 의미 순위 유지 · 민감 단어 제외/)).toBeVisible();
   await expect(page.getByRole("cell", { name: "1위", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "민감 단어 포함해서 보기" }).click();
+  await expect(page.getByText(/민감 단어 포함/)).toBeVisible();
   await page.getByRole("button", { name: "마지막" }).click();
   await expect(
     page.getByRole("cell", { name: "280,804위", exact: true }),
