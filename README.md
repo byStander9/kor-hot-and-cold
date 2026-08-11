@@ -286,6 +286,8 @@ docs/           전체 계획, 출처 정책, 모델 비교 결과
 - [임베딩 모델 1차 비교](docs/MODEL_EVALUATION.md)
 - [모바일 디자인 명세](docs/mobile/DESIGN_SPEC.md)
 - [Android 실기기 테스트 체크리스트](docs/mobile/ANDROID_TEST_CHECKLIST.md)
+- [Google Play 출시 가이드](docs/mobile/play-store/RELEASE_GUIDE.md)
+- [개인정보처리방침 초안](docs/mobile/play-store/PRIVACY_POLICY_DRAFT_KO.md)
 
 ## 참고한 프로젝트와 자료
 
