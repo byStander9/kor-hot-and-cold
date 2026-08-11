@@ -98,6 +98,7 @@ apps/mobile/android/app/build/outputs/bundle/release/app-release.aab
 3. Play App Signing을 설정합니다.
 4. 첫 AAB를 내부 테스트 트랙에 수동 업로드합니다.
 5. 개인정보처리방침 URL, Data Safety, 앱 액세스, 광고 여부, 콘텐츠 등급, 대상 연령을 작성합니다.
+   대상 연령과 IARC는 [답변 근거 초안](CONTENT_RATING_DRAFT_KO.md)을 확인해 민감 단어 포함 전체 순위 opt-in을 누락하지 않습니다.
 6. [Play 스토어 그래픽 자산](../store-assets/README.md)의 아이콘·feature graphic과 최종 출시 빌드 스크린샷을 등록합니다.
 7. 실기기 내부 테스트를 통과한 뒤 비공개 테스트와 production 순서로 진행합니다.
 
