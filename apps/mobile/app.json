@@ -52,6 +52,12 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "88fc0536-a978-481f-a293-1f3a58be689f"
+      }
+    },
+    "owner": "bystander9"
   }
 }
